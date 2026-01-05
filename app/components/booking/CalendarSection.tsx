@@ -63,7 +63,7 @@ const CalendarSection: React.FC<CalendarSectionProps> = ({
 
       <div
         ref={scrollContainerRef}
-        className="flex gap-3 overflow-x-auto hide-scrollbar -mx-2 px-2 py-2"
+        className="flex gap-3 overflow-x-auto hide-scrollbar -mx-6 px-8 py-4"
       >
         {days.map((day) => {
           const isSelected = selectedDate.fullDate === day.fullDate;

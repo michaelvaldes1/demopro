@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Home, Scissors, Image as ImageIcon, Mail } from "lucide-react";
+import { Home, Scissors, Calendar, Mail } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,7 +14,7 @@ type NavItem = {
 const navItems: NavItem[] = [
     { label: "Inicio", icon: <Home size={20} />, href: "/" },
     { label: "Servicios", icon: <Scissors size={20} />, href: "/services" },
-    { label: "Agenda", icon: <ImageIcon size={20} />, href: "/booking" },
+    { label: "Agenda", icon: <Calendar size={20} />, href: "/booking" },
     { label: "Contacto", icon: <Mail size={20} />, href: "#contact" },
 ];
 
@@ -44,8 +44,8 @@ export default function BottomNavBar() {
                                 key={item.label}
                                 href={item.href}
                                 className={`relative flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all duration-300 min-w-[70px] ${isActive
-                                        ? "text-[#D09E1E]"
-                                        : "text-zinc-300 hover:text-white hover:bg-white/10"
+                                    ? "text-[#D09E1E]"
+                                    : "text-zinc-300 hover:text-white hover:bg-white/10"
                                     }`}
                             >
                                 <div className={`transition-all duration-300 ${isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(208,158,30,0.8)]" : "scale-100"}`}>

@@ -122,6 +122,7 @@ function BookingContent() {
                     date={`${selectedDate.dayName} ${selectedDate.dateNumber} de ${format(parseISO(selectedDate.fullDate), 'MMMM', { locale: es })}`}
                     time={selectedTime?.time || ""}
                     onConfirm={handleConfirm}
+                    onCancel={() => setSelectedTimeId('')}
                     onAddService={handleAddService}
                     onRemoveService={handleRemoveService}
                 />

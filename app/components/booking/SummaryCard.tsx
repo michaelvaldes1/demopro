@@ -10,6 +10,7 @@ interface SummaryCardProps {
   date: string;
   time: string;
   onConfirm: () => void;
+  onCancel: () => void;
   onAddService: (service: Service) => void;
   onRemoveService: (serviceId: string) => void;
 }
@@ -21,6 +22,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   date,
   time,
   onConfirm,
+  onCancel,
   onAddService,
   onRemoveService
 }) => {
@@ -33,6 +35,27 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   useEffect(() => {
     setIsExpanded(true);
   }, [time, date, barberName, services.length]);
+
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: PointerEvent | MouseEvent) => {
+      if (!isExpanded || showAddService) return;
+
+      // Check if the click is on an element that shouldn't trigger collapse (optional, but good practice if needed)
+      // For now, any click outside checks the ref
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+
+    // Use pointerdown to handle both touch and mouse immediately
+    // Use capture=true to catch the event before it's stopped by other stopPropagation calls
+    document.addEventListener('pointerdown', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside, true);
+    };
+  }, [isExpanded, showAddService]);
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 50;
@@ -104,6 +127,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
+        ref={cardRef}
         className="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur-2xl rounded-t-[32px] p-6 pt-4 border-t border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.5)] z-50 max-w-2xl mx-auto"
       >
         <div className="w-full flex justify-center pb-6 pt-2 cursor-grab active:cursor-grabbing">
@@ -169,13 +193,22 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={onConfirm}
-          className="w-full bg-[#D09E1E] hover:bg-[#b88a18] active:scale-[0.98] transition-all text-black font-black text-[17px] py-4 rounded-full flex items-center justify-center gap-2 shadow-xl shadow-[#D09E1E]/20 group"
-        >
-          Confirmar Reserva
-          <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-        </button>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onConfirm}
+            className="w-full bg-[#D09E1E] hover:bg-[#b88a18] active:scale-[0.98] transition-all text-black font-black text-[17px] py-4 rounded-full flex items-center justify-center gap-2 shadow-xl shadow-[#D09E1E]/20 group"
+          >
+            Confirmar Reserva
+            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+
+          <button
+            onClick={onCancel}
+            className="w-full bg-zinc-800/50 hover:bg-red-500/10 active:scale-[0.98] transition-all text-zinc-400 hover:text-red-400 font-bold text-[15px] py-3 rounded-full flex items-center justify-center gap-2"
+          >
+            Cancelar Reserva
+          </button>
+        </div>
 
         <div className="h-4" />
       </motion.div>

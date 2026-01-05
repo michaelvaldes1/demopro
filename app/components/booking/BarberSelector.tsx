@@ -12,7 +12,7 @@ const BarberSelector: React.FC<BarberSelectorProps> = ({ barbers, selectedBarber
     return (
         <div className="space-y-3">
             <h3 className="text-[12px] font-bold text-secondaryText uppercase tracking-[0.1em]">Select Barber</h3>
-            <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+            <div className="flex gap-4 overflow-x-auto py-4 hide-scrollbar justify-center">
                 {barbers.map((barber) => {
                     const isSelected = selectedBarberId === barber.id;
                     return (

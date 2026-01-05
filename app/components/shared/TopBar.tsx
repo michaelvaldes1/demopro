@@ -35,8 +35,7 @@ export default function TopBar() {
                             <DropdownMenu
                                 aria-label="Profile Actions"
                                 classNames={{
-                                    base: "before:bg-transparent",
-                                    content: "p-1 min-w-[200px] bg-transparent"
+                                    base: "before:bg-transparent p-1 min-w-[200px] bg-transparent"
                                 }}
                                 style={{
                                     backdropFilter: 'blur(16px)',
