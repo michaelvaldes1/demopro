@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 100" role="img" aria-label="Razor blade vertical icon">
+  <!-- Outer blade (vertical) -->
+  <path fill="currentColor" d="
+    M14 6
+    H50
+    C54 6 57 9 57 13
+    V26
+    C57 29 55 31 52 32
+    V68
+    C55 69 57 71 57 74
+    V87
+    C57 91 54 94 50 94
+    H14
+    C10 94 7 91 7 87
+    V74
+    C7 71 9 69 12 68
+    V32
+    C9 31 7 29 7 26
+    V13
+    C7 9 10 6 14 6
+    Z
+
+    M12 20
+    C10 20 9 19 9 17
+    V14
+    C9 11 11 9 14 9
+    H50
+    C53 9 55 11 55 14
+    V17
+    C55 19 54 20 52 20
+    C51 20 50 21 49 22
+    C48 23 47 24 46 24
+    H18
+    C17 24 16 23 15 22
+    C14 21 13 20 12 20
+    Z
+
+    M12 80
+    C13 80 14 79 15 78
+    C16 77 17 76 18 76
+    H46
+    C47 76 48 77 49 78
+    C50 79 51 80 52 80
+    C54 80 55 81 55 83
+    V86
+    C55 89 53 91 50 91
+    H14
+    C11 91 9 89 9 86
+    V83
+    C9 81 10 80 12 80
+    Z
+  "/>
+
+  <!-- Inner cutout -->
+  <rect x="16" y="36" width="32" height="28" rx="14" fill="#ffffff"/>
+
+  <!-- Center slit line -->
+  <path d="M18 50H46" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Small teeth/cuts -->
+  <g fill="#ffffff">
+    <rect x="14" y="44" width="6" height="12" rx="3"/>
+    <rect x="44" y="44" width="6" height="12" rx="3"/>
+    <rect x="28" y="42" width="8" height="16" rx="4"/>
+  </g>
+</svg>

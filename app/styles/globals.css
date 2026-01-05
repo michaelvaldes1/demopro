@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #D09E1E;
+    --color-secondaryText: #a1a1aa;
+}
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+}
+
+/* Support both system preference and manual declaration */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+:root:has(.dark) {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+}
+
+.dark {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+}
+
+body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+}
+
+/* Custom utilities */
+@utility liquid-glass {
+    background-color: rgba(24, 24, 27, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+@utility liquid-glass-border {
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@utility bg-primary {
+    background-color: #D09E1E;
+}
+
+@utility text-primary {
+    color: #D09E1E;
+}
+
+@utility border-primary {
+    border-color: #D09E1E;
+}
+
+@utility ring-primary {
+    --tw-ring-color: #D09E1E;
+}
+
+@utility text-secondaryText {
+    color: #a1a1aa;
+}
+
+@utility hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@utility no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
