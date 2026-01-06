@@ -27,13 +27,13 @@ export default function ServicesPage() {
                         <Button
                             key={cat.value}
                             onPress={() => setActiveCategory(cat.value)}
-                            className={`rounded-full px-6 transition-all font-bold ${activeCategory === cat.value
-                                    ? 'bg-[#edbc1d] text-black shadow-[0_0_20px_rgba(237,188,29,0.3)]'
-                                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                            className={`rounded-full px-6 transition-all font-bold flex items-center justify-center h-10 ${activeCategory === cat.value
+                                ? 'bg-[#edbc1d] text-black shadow-[0_0_20px_rgba(237,188,29,0.3)]'
+                                : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
                                 }`}
                             size="sm"
                         >
-                            {cat.label}
+                            <span className="translate-y-[1px]">{cat.label}</span>
                         </Button>
                     ))}
                 </div>

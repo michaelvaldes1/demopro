@@ -44,21 +44,23 @@ const CalendarSection: React.FC<CalendarSectionProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-bold text-white capitalize">{capitalizedMonth}</h2>
-        <div className="flex gap-4">
-          <button
-            onClick={onPrevMonth}
-            className="text-secondaryText hover:text-white transition-colors"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            onClick={onNextMonth}
-            className="text-secondaryText hover:text-white transition-colors"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
+        <button
+          onClick={onPrevMonth}
+          className="text-secondaryText hover:text-white transition-colors p-2"
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        <h2 className="text-[18px] font-bold text-white capitalize text-center flex-1">
+          {capitalizedMonth}
+        </h2>
+
+        <button
+          onClick={onNextMonth}
+          className="text-secondaryText hover:text-white transition-colors p-2"
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
 
       <div
@@ -80,7 +82,7 @@ const CalendarSection: React.FC<CalendarSectionProps> = ({
                 ${isSelected
                   ? 'bg-[#D09E1E] text-black shadow-lg shadow-[#D09E1E]/25 scale-105'
                   : isDisabled
-                    ? 'opacity-40 cursor-not-allowed hidden'
+                    ? 'opacity-20 cursor-not-allowed bg-zinc-900/50 grayscale'
                     : 'bg-zinc-900 border border-white/5 hover:border-[#D09E1E]/50 text-zinc-400'}
               `}
             >

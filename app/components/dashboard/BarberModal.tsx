@@ -1,9 +1,9 @@
 "use client";
 import React from 'react';
 import Image from 'next/image';
-import { Modal, ModalContent, ModalHeader, ModalBody, Button, useDisclosure } from "@heroui/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@heroui/react";
 import { FaInstagram, FaWhatsapp, FaTiktok } from "react-icons/fa";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 interface BarberModalProps {
     isOpen: boolean;
@@ -56,20 +56,23 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
             isOpen={isOpen}
             onOpenChange={onOpenChange}
             size="2xl"
-            scrollBehavior="inside"
+            scrollBehavior="outside"
             backdrop="blur"
+            placement="center"
             classNames={{
-                base: "bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden z-[200]",
-                header: "border-0 p-0",
+                wrapper: "z-[9999]",
+                backdrop: "z-[9998]",
+                base: "bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-visible",
+                header: "p-0 border-0",
                 body: "p-0",
-                closeButton: "z-[210] bg-black/50 text-white hover:bg-black/70 mt-4 mr-4"
+                footer: "border-t border-zinc-900 bg-zinc-950/50 backdrop-blur-md p-6 justify-center sm:justify-between",
+                closeButton: "z-[10000] bg-black/50 text-white hover:bg-black/70 mt-4 mr-4 right-4"
             }}
         >
             <ModalContent>
-                {() => (
+                {(onClose) => (
                     <>
-                        <ModalBody>
-                            {/* Cover Section */}
+                        <ModalHeader className="flex flex-col gap-0 overflow-visible relative">
                             <div className="relative h-48 md:h-64 w-full rounded-t-[2.5rem] overflow-hidden">
                                 <Image
                                     src={barber.coverImage}
@@ -78,24 +81,25 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                     className="object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/40" />
-
-                                {/* Profile Pic overlapping cover */}
-                                <div className="absolute -bottom-16 left-8 flex items-center justify-center z-20">
-                                    <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-zinc-950 overflow-hidden shadow-2xl bg-zinc-900">
-                                        <Image
-                                            src={barber.image}
-                                            alt={barber.name}
-                                            fill
-                                            className="object-cover"
-                                            priority
-                                        />
-                                    </div>
-                                </div>
                             </div>
 
-                            {/* Info Section */}
-                            <div className="mt-20 px-8 pb-8">
-                                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            {/* Profile Pic overlapping - Moved OUTSIDE the clipped div */}
+                            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
+                                <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-zinc-950 overflow-hidden shadow-2xl bg-zinc-900">
+                                    <Image
+                                        src={barber.image}
+                                        alt={barber.name}
+                                        fill
+                                        className="object-cover"
+                                        priority
+                                    />
+                                </div>
+                            </div>
+                        </ModalHeader>
+
+                        <ModalBody className="overflow-visible">
+                            <div className="mt-20 px-8 pb-8 flex flex-col items-center">
+                                <div className="flex flex-col items-center justify-center gap-6 w-full text-center">
                                     <div>
                                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
                                             {barber.name}
@@ -103,42 +107,42 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                         <p className="text-zinc-400 font-medium">Barbero Top en MIAGOBARBER</p>
                                     </div>
 
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-4 justify-center items-center">
                                         <Button
                                             isIconOnly
                                             radius="full"
-                                            className="bg-[#25D366] text-white hover:scale-110"
+                                            className="bg-[#25D366] text-white hover:scale-110 flex items-center justify-center p-0"
                                             as="a"
                                             href={barber.socials.whatsapp}
                                             target="_blank"
                                         >
-                                            <FaWhatsapp size={20} />
+                                            <FaWhatsapp size={20} className="block mx-auto" />
                                         </Button>
                                         <Button
                                             isIconOnly
                                             radius="full"
-                                            className="bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white hover:scale-110"
+                                            className="bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white hover:scale-110 flex items-center justify-center p-0"
                                             as="a"
                                             href={barber.socials.instagram}
                                             target="_blank"
                                         >
-                                            <FaInstagram size={20} />
+                                            <FaInstagram size={20} className="block mx-auto" />
                                         </Button>
                                         <Button
                                             isIconOnly
                                             radius="full"
-                                            className="bg-black text-white border border-zinc-800 hover:scale-110"
+                                            className="bg-black text-white border border-zinc-800 hover:scale-110 flex items-center justify-center p-0"
                                             as="a"
                                             href={barber.socials.tiktok}
                                             target="_blank"
                                         >
-                                            <FaTiktok size={18} />
+                                            <FaTiktok size={18} className="block mx-auto" />
                                         </Button>
                                     </div>
                                 </div>
 
-                                <div className="mt-10">
-                                    <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-tight">Portafolio</h3>
+                                <div className="mt-10 w-full">
+                                    <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-tight text-center md:text-left">Portafolio</h3>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         {portfolioImages.map((src, i) => (
                                             <div
@@ -158,6 +162,23 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                 </div>
                             </div>
                         </ModalBody>
+
+                        <ModalFooter className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                            <Button
+                                variant="light"
+                                className="text-zinc-400 font-bold uppercase tracking-wider w-full sm:w-32 h-12"
+                                onPress={onClose}
+                            >
+                                <span className="flex-1 text-center">Cerrar</span>
+                            </Button>
+                            <Button
+                                className="bg-[#D09E1E] text-black font-black uppercase tracking-tight transform transition-all hover:scale-105 active:scale-95 w-full sm:px-12 h-12 flex items-center justify-center gap-3"
+                                onPress={() => window.location.href = `/booking?barberId=${barber.name.toLowerCase()}`}
+                            >
+                                <Calendar size={18} />
+                                <span className="translate-y-[0.5px]">Agendar Cita</span>
+                            </Button>
+                        </ModalFooter>
                     </>
                 )}
             </ModalContent>

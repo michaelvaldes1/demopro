@@ -25,12 +25,20 @@ export default function BookingPage() {
 function BookingContent() {
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('serviceId');
+    const barberIdParam = searchParams.get('barberId');
 
     const [viewDate, setViewDate] = useState(new Date());
     const days = generateMockDays(viewDate);
 
-    const [selectedBarberId, setSelectedBarberId] = useState(MOCK_BARBERS[0].id);
-    const [selectedDate, setSelectedDate] = useState<DayInfo>(days[0]);
+    // Find the barber from URL param or default to first
+    const initialBarberId = MOCK_BARBERS.find(b => b.name.toLowerCase() === barberIdParam?.toLowerCase())?.id || MOCK_BARBERS[0].id;
+    const [selectedBarberId, setSelectedBarberId] = useState(initialBarberId);
+
+    // Default to today's date
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const initialDate = days.find(d => d.fullDate === todayStr) || days[0];
+    const [selectedDate, setSelectedDate] = useState<DayInfo>(initialDate);
+
     const [selectedTimeId, setSelectedTimeId] = useState<string>('');
 
     // Initialize services with the one from URL or default
@@ -106,7 +114,13 @@ function BookingContent() {
                     />
                     <TimeGrid
                         title="Tarde"
-                        slots={MOCK_TIME_SLOTS.slice(3)}
+                        slots={MOCK_TIME_SLOTS.slice(3, 9)}
+                        selectedId={selectedTimeId}
+                        onSelect={setSelectedTimeId}
+                    />
+                    <TimeGrid
+                        title="Noche"
+                        slots={MOCK_TIME_SLOTS.slice(9)}
                         selectedId={selectedTimeId}
                         onSelect={setSelectedTimeId}
                     />
