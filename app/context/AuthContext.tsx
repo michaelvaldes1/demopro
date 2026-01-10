@@ -7,6 +7,7 @@ import {
     signInAnonymously,
     signOut,
     onAuthStateChanged,
+    getIdToken
 } from "firebase/auth";
 import { auth, googleProvider, appleProvider } from "../lib/firebase/clients";
 
@@ -28,8 +29,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
+
+            if (currentUser) {
+                // Obtener el ID Token y guardarlo en la cookie
+                const token = await getIdToken(currentUser);
+                document.cookie = `__session=${token}; path=/; max-age=3600; Secure; SameSite=Strict`;
+            } else {
+                // Limpiar la cookie al cerrar sesión
+                document.cookie = "__session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            }
+
             setLoading(false);
         });
 

@@ -1,13 +1,23 @@
-export const metadata = {
-    title: "Panel administrativo",
-    robots: "noindex, nofollow", // Ayuda a prevenir el indexado de la página
-};
+import React from 'react';
+import { getDashboardData } from './actions';
+import { format } from 'date-fns';
+import DashboardClient from './components/DashboardClient';
 
-export default function AdminPage() {
+interface PageProps {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function AdminDashboard({ searchParams }: PageProps) {
+    const params = await searchParams;
+    const selectedDate = typeof params.date === 'string' ? params.date : format(new Date(), 'yyyy-MM-dd');
+
+    const { stats, appointments } = await getDashboardData(selectedDate);
+
     return (
-        <div>
-            <h1>Admin Panel</h1>
-            <p>Welcome to the admin panel.</p>
-        </div>
+        <DashboardClient
+            stats={stats}
+            appointments={appointments}
+            selectedDate={selectedDate}
+        />
     );
 }

@@ -136,13 +136,19 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         initial="expanded"
         animate={isExpanded ? "expanded" : "collapsed"}
         variants={variants}
-        transition={{ type: "spring", damping: 28, stiffness: 400 }}
+        transition={{
+          type: "spring",
+          damping: 25,
+          stiffness: 300,
+          mass: 0.8
+        }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.05}
+        dragElastic={0.15}
         onDragEnd={handleDragEnd}
+        onClick={() => !isExpanded && setIsExpanded(true)}
         ref={cardRef}
-        className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a]/60 backdrop-blur-3xl rounded-t-[3rem] p-7 pt-4 border-t border-white/20 shadow-[0_-20px_80px_rgba(0,0,0,0.8)] z-50 max-w-2xl mx-auto overflow-hidden"
+        className={`fixed bottom-0 left-0 right-0 bg-[#0a0a0a]/60 backdrop-blur-3xl rounded-t-[3rem] p-7 pt-4 border-t border-white/20 shadow-[0_-20px_80px_rgba(0,0,0,0.8)] z-50 max-w-2xl mx-auto overflow-hidden ${!isExpanded ? 'cursor-pointer' : ''}`}
       >
         {/* Reflejo de cristal en el borde superior */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />

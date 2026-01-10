@@ -12,8 +12,8 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-    { label: "Inicio", icon: <Home size={20} />, href: "/" },
-    { label: "Servicios", icon: <Scissors size={20} />, href: "/services" },
+    { label: "Inicio", icon: <Home size={20} />, href: "/dashboard" },
+    { label: "Servicios", icon: <Scissors size={20} />, href: "/BarberService" },
     { label: "Agenda", icon: <Calendar size={20} />, href: "/booking" },
     { label: "Contacto", icon: <Mail size={20} />, href: "/contact" },
 ];

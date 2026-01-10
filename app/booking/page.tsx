@@ -1,16 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import Header from '../components/booking/Header';
-import BarberSelector from '../components/booking/BarberSelector';
-import CalendarSection from '../components/booking/CalendarSection';
-import TimeGrid from '../components/booking/TimeGrid';
-import SummaryCard from '../components/booking/SummaryCard';
+import TopBar from '../components/shared/TopBar';
+import BarberSelector from './components/BarberSelector';
+import CalendarSection from './components/CalendarSection';
+import TimeGrid from './components/TimeGrid';
+import SummaryCard from './components/SummaryCard';
 import BottomNavBar from '../components/shared/BottomNavBar';
 import { MOCK_BARBERS, MOCK_SERVICES, generateMockDays, MOCK_TIME_SLOTS } from '../constants/booking';
-import { DayInfo } from '../components/booking/types';
+import { DayInfo } from './components/types';
 import { addMonths, subMonths, parseISO, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useAuth } from '../context/AuthContext';
+import { createNotification } from '../lib/firebase/notifications';
+import { useEffect } from 'react';
+import { useDisclosure } from '@heroui/react';
+import BookingConfirmationModal from './components/BookingConfirmationModal';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -30,6 +35,14 @@ function BookingContent() {
     const [viewDate, setViewDate] = useState(new Date());
     const days = generateMockDays(viewDate);
 
+    const { user } = useAuth();
+    const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isBookingSuccess, setIsBookingSuccess] = useState(false);
+    const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmOpenChange, onClose: onConfirmClose } = useDisclosure();
+
+
+
     // Find the barber from URL param or default to first
     const initialBarberId = MOCK_BARBERS.find(b => b.name.toLowerCase() === barberIdParam?.toLowerCase())?.id || MOCK_BARBERS[0].id;
     const [selectedBarberId, setSelectedBarberId] = useState(initialBarberId);
@@ -39,6 +52,29 @@ function BookingContent() {
     const initialDate = days.find(d => d.fullDate === todayStr) || days[0];
     const [selectedDate, setSelectedDate] = useState<DayInfo>(initialDate);
 
+    useEffect(() => {
+        const fetchBookedSlots = async () => {
+            if (selectedBarberId && selectedDate.fullDate) {
+                try {
+                    const response = await fetch(`/api/availability?date=${selectedDate.fullDate}&barberId=${selectedBarberId}`);
+                    if (response.ok) {
+                        const bookedTimes = await response.json();
+                        setBookedSlots(bookedTimes);
+                    }
+                } catch (error) {
+                    console.error("Error fetching availability:", error);
+                }
+            }
+        };
+        fetchBookedSlots();
+    }, [selectedBarberId, selectedDate.fullDate]);
+
+    // Update slots availability based on fetched bookedSlots
+    const timeSlots = MOCK_TIME_SLOTS.map(slot => ({
+        ...slot,
+        isAvailable: slot.isAvailable && !bookedSlots.includes(slot.time)
+    }));
+
     const [selectedTimeId, setSelectedTimeId] = useState<string>('');
 
     // Initialize services with the one from URL or default
@@ -46,7 +82,7 @@ function BookingContent() {
     const [selectedServices, setSelectedServices] = useState<typeof MOCK_SERVICES>([initialService]);
 
     const selectedBarber = MOCK_BARBERS.find(b => b.id === selectedBarberId);
-    const selectedTime = MOCK_TIME_SLOTS.find(t => t.id === selectedTimeId);
+    const selectedTime = timeSlots.find(t => t.id === selectedTimeId);
 
     const handleAddService = (service: typeof MOCK_SERVICES[0]) => {
         if (!selectedServices.find(s => s.id === service.id)) {
@@ -69,22 +105,80 @@ function BookingContent() {
     };
 
     const handleConfirm = () => {
-        if (!selectedTimeId) {
-            alert("Por favor selecciona una hora");
-            return;
-        }
-        console.log("Booking confirmed:", {
-            barber: selectedBarber?.name,
-            date: selectedDate.fullDate,
-            time: selectedTime?.time,
-            services: selectedServices.map(s => s.name)
-        });
-        alert("¡Cita agendada con éxito!");
+        if (!selectedTimeId) return;
+
+        setIsBookingSuccess(false);
+        onConfirmOpen();
     };
 
+    const finalizeBooking = async () => {
+        if (!user || !selectedTime || !selectedBarber) return;
+
+        setIsSaving(true);
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch('/api/citas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    userId: user.uid,
+                    serviceId: selectedServices[0].id,
+                    serviceName: selectedServices[0].name,
+                    date: selectedDate.fullDate,
+                    time: selectedTime.time,
+                    barberId: selectedBarberId,
+                    barberName: selectedBarber.name,
+                    clientName: user.displayName || "Invitado",
+                    clientEmail: user.email || "invitado@miago.com",
+                    status: 'confirmed'
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setIsBookingSuccess(true);
+
+                // Create notification (This should also eventually be a proxy call)
+                await createNotification({
+                    userId: user.email!,
+                    title: "Cita Confirmada",
+                    message: `Tu cita para ${selectedServices[0].name} el ${selectedDate.dayName} ${selectedDate.dateNumber} a las ${selectedTime.time} ha sido agendada con éxito.`,
+                    isRead: false
+                });
+
+                // Refresh booked slots via the same proxy
+                const refreshResponse = await fetch(`/api/citas?userId=${user.uid}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (refreshResponse.ok) {
+                    const allAppointments = await refreshResponse.json();
+                    const filtered = allAppointments
+                        .filter((apt: any) => apt.barberId === selectedBarberId && apt.date === selectedDate.fullDate && apt.status === 'confirmed')
+                        .map((apt: any) => apt.time);
+                    setBookedSlots(filtered);
+                }
+
+                setSelectedTimeId('');
+            } else {
+                const errorData = await response.json();
+                console.error("Booking error via proxy:", errorData.error);
+            }
+        } catch (error) {
+            console.error("Booking exception via proxy:", error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+
     return (
-        <div className="min-h-screen bg-background text-white pb-32 max-w-2xl mx-auto shadow-2xl overflow-hidden relative">
-            <Header />
+        <div className="min-h-screen bg-background text-white pb-32 max-w-2xl mx-auto shadow-2xl overflow-hidden relative pt-16">
+            <TopBar />
 
             <main className="px-6 space-y-8 mt-4">
                 {/* Barber Selection */}
@@ -108,19 +202,19 @@ function BookingContent() {
                 <div className="space-y-6">
                     <TimeGrid
                         title="Mañana"
-                        slots={MOCK_TIME_SLOTS.slice(0, 3)}
+                        slots={timeSlots.slice(0, 3)}
                         selectedId={selectedTimeId}
                         onSelect={setSelectedTimeId}
                     />
                     <TimeGrid
                         title="Tarde"
-                        slots={MOCK_TIME_SLOTS.slice(3, 9)}
+                        slots={timeSlots.slice(3, 9)}
                         selectedId={selectedTimeId}
                         onSelect={setSelectedTimeId}
                     />
                     <TimeGrid
                         title="Noche"
-                        slots={MOCK_TIME_SLOTS.slice(9)}
+                        slots={timeSlots.slice(9)}
                         selectedId={selectedTimeId}
                         onSelect={setSelectedTimeId}
                     />
@@ -139,6 +233,24 @@ function BookingContent() {
                     onCancel={() => setSelectedTimeId('')}
                     onAddService={handleAddService}
                     onRemoveService={handleRemoveService}
+                />
+            )}
+
+            {selectedBarber && selectedTime && (
+                <BookingConfirmationModal
+                    isOpen={isConfirmOpen}
+                    onOpenChange={onConfirmOpenChange}
+                    onConfirm={finalizeBooking}
+                    isSaving={isSaving}
+                    isSuccess={isBookingSuccess}
+                    bookingData={{
+                        service: selectedServices[0],
+                        barberName: selectedBarber.name,
+                        date: `${selectedDate.dayName} ${selectedDate.dateNumber} de ${format(parseISO(selectedDate.fullDate), 'MMMM', { locale: es })}`,
+                        time: selectedTime.time,
+                        clientName: user?.displayName || "Invitado",
+                        clientEmail: user?.email || "N/A"
+                    }}
                 />
             )}
 

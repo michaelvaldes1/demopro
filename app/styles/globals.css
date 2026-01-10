@@ -3,6 +3,7 @@
 @theme {
     --color-primary: #D09E1E;
     --color-secondaryText: #a1a1aa;
+    --color-cardDark: #1c1c1c;
 }
 
 :root {
@@ -83,4 +84,12 @@ body {
     &::-webkit-scrollbar {
         display: none;
     }
+}
+
+@utility bg-card-dark {
+    background-color: #18181b;
+}
+
+@utility border-card-dark {
+    border-color: #27272a;
 }

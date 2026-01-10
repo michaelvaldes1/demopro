@@ -2,6 +2,7 @@
 import { Avatar, Card, CardBody, Divider } from "@heroui/react";
 import { useAuth } from "../../context/AuthContext";
 import { Mail, User, ShieldCheck } from "lucide-react";
+import AppointmentHistory from "./AppointmentHistory";
 
 export default function Profile() {
     const { user } = useAuth();
@@ -57,9 +58,13 @@ export default function Profile() {
 
             <Divider className="bg-zinc-800" />
 
-            <div className="px-2">
-                <p className="text-xs text-zinc-500 italic text-center">
-                    Pronto podrás gestionar tus citas y preferencias desde aquí.
+            <div className="pt-2">
+                <AppointmentHistory />
+            </div>
+
+            <div className="px-2 pt-6">
+                <p className="text-[10px] text-zinc-600 italic text-center uppercase font-bold tracking-widest">
+                    Gracias por confiar en MiagoBarber
                 </p>
             </div>
         </div>
