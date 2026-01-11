@@ -27,6 +27,8 @@ export default function BookingPage() {
     );
 }
 
+import { getBarbers } from '../admin/actions';
+
 function BookingContent() {
     const searchParams = useSearchParams();
     const serviceId = searchParams.get('serviceId');
@@ -36,16 +38,34 @@ function BookingContent() {
     const days = generateMockDays(viewDate);
 
     const { user } = useAuth();
+    const [barbers, setBarbers] = useState<any[]>([]);
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isBookingSuccess, setIsBookingSuccess] = useState(false);
     const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmOpenChange, onClose: onConfirmClose } = useDisclosure();
 
+    const [selectedBarberId, setSelectedBarberId] = useState<string>('');
 
+    // Load barbers from database
+    useEffect(() => {
+        const loadBarbers = async () => {
+            try {
+                const data = await getBarbers();
+                setBarbers(data);
 
-    // Find the barber from URL param or default to first
-    const initialBarberId = MOCK_BARBERS.find(b => b.name.toLowerCase() === barberIdParam?.toLowerCase())?.id || MOCK_BARBERS[0].id;
-    const [selectedBarberId, setSelectedBarberId] = useState(initialBarberId);
+                // Find the barber from URL param or default to first
+                const initialBarberId = data.find(b =>
+                    b.name.toLowerCase() === barberIdParam?.toLowerCase() ||
+                    b.id === barberIdParam
+                )?.id || data[0].id;
+
+                setSelectedBarberId(initialBarberId);
+            } catch (error) {
+                console.error("Error loading barbers:", error);
+            }
+        };
+        loadBarbers();
+    }, [barberIdParam]);
 
     // Default to today's date
     const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -69,10 +89,35 @@ function BookingContent() {
         fetchBookedSlots();
     }, [selectedBarberId, selectedDate.fullDate]);
 
-    // Update slots availability based on fetched bookedSlots
+    // Helper to check if a specific time string (09:00 AM) on the selected date is in the past
+    const isSlotInPast = (timeStr: string) => {
+        const now = new Date();
+        const selectedDateStr = selectedDate.fullDate;
+
+        // If selected date is BEFORE today, all slots are past (though they should be disabled in calendar)
+        if (selectedDateStr < todayStr) return true;
+
+        // If selected date is TODAY, we need to compare times
+        if (selectedDateStr === todayStr) {
+            const [timePart, meridiem] = timeStr.split(' ');
+            let [hours, minutes] = timePart.split(':').map(Number);
+
+            if (meridiem === 'PM' && hours !== 12) hours += 12;
+            if (meridiem === 'AM' && hours === 12) hours = 0;
+
+            const slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+            // Add a 5 or 10 min buffer if desired, or just use now
+            return slotDate < now;
+        }
+
+        // Future dates
+        return false;
+    };
+
+    // Update slots availability based on fetched bookedSlots and past time
     const timeSlots = MOCK_TIME_SLOTS.map(slot => ({
         ...slot,
-        isAvailable: slot.isAvailable && !bookedSlots.includes(slot.time)
+        isAvailable: slot.isAvailable && !bookedSlots.includes(slot.time) && !isSlotInPast(slot.time)
     }));
 
     const [selectedTimeId, setSelectedTimeId] = useState<string>('');
@@ -81,7 +126,7 @@ function BookingContent() {
     const initialService = MOCK_SERVICES.find(s => s.id === serviceId) || MOCK_SERVICES[0];
     const [selectedServices, setSelectedServices] = useState<typeof MOCK_SERVICES>([initialService]);
 
-    const selectedBarber = MOCK_BARBERS.find(b => b.id === selectedBarberId);
+    const selectedBarber = barbers.find(b => b.id === selectedBarberId);
     const selectedTime = timeSlots.find(t => t.id === selectedTimeId);
 
     const handleAddService = (service: typeof MOCK_SERVICES[0]) => {
@@ -183,7 +228,7 @@ function BookingContent() {
             <main className="px-6 space-y-8 mt-4">
                 {/* Barber Selection */}
                 <BarberSelector
-                    barbers={MOCK_BARBERS}
+                    barbers={barbers}
                     selectedBarberId={selectedBarberId}
                     onSelect={setSelectedBarberId}
                 />

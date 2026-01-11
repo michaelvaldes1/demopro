@@ -107,38 +107,46 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                         <p className="text-zinc-400 font-medium">Barbero Top en MIAGOBARBER</p>
                                     </div>
 
-                                    <div className="flex gap-4 justify-center items-center">
-                                        <Button
-                                            isIconOnly
-                                            radius="full"
-                                            className="bg-[#25D366] text-white hover:scale-110 flex items-center justify-center p-0"
-                                            as="a"
-                                            href={barber.socials.whatsapp}
-                                            target="_blank"
-                                        >
-                                            <FaWhatsapp size={20} className="block mx-auto" />
-                                        </Button>
-                                        <Button
-                                            isIconOnly
-                                            radius="full"
-                                            className="bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white hover:scale-110 flex items-center justify-center p-0"
-                                            as="a"
-                                            href={barber.socials.instagram}
-                                            target="_blank"
-                                        >
-                                            <FaInstagram size={20} className="block mx-auto" />
-                                        </Button>
-                                        <Button
-                                            isIconOnly
-                                            radius="full"
-                                            className="bg-black text-white border border-zinc-800 hover:scale-110 flex items-center justify-center p-0"
-                                            as="a"
-                                            href={barber.socials.tiktok}
-                                            target="_blank"
-                                        >
-                                            <FaTiktok size={18} className="block mx-auto" />
-                                        </Button>
-                                    </div>
+                                    {(barber.socials.whatsapp || barber.socials.instagram || barber.socials.tiktok) && (
+                                        <div className="flex gap-4 justify-center items-center">
+                                            {barber.socials.whatsapp && (
+                                                <Button
+                                                    isIconOnly
+                                                    radius="full"
+                                                    className="bg-[#25D366] text-white hover:scale-110 flex items-center justify-center p-0"
+                                                    as="a"
+                                                    href={barber.socials.whatsapp}
+                                                    target="_blank"
+                                                >
+                                                    <FaWhatsapp size={20} className="block mx-auto" />
+                                                </Button>
+                                            )}
+                                            {barber.socials.instagram && (
+                                                <Button
+                                                    isIconOnly
+                                                    radius="full"
+                                                    className="bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white hover:scale-110 flex items-center justify-center p-0"
+                                                    as="a"
+                                                    href={barber.socials.instagram}
+                                                    target="_blank"
+                                                >
+                                                    <FaInstagram size={20} className="block mx-auto" />
+                                                </Button>
+                                            )}
+                                            {barber.socials.tiktok && (
+                                                <Button
+                                                    isIconOnly
+                                                    radius="full"
+                                                    className="bg-black text-white border border-zinc-800 hover:scale-110 flex items-center justify-center p-0"
+                                                    as="a"
+                                                    href={barber.socials.tiktok}
+                                                    target="_blank"
+                                                >
+                                                    <FaTiktok size={18} className="block mx-auto" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mt-10 w-full">

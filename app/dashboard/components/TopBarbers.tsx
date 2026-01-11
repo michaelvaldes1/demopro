@@ -1,25 +1,56 @@
 "use client";
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { BARBERS } from '../../constants/barbers';
+import { getBarbers } from '../../admin/actions';
 import { BarberModal } from './BarberModal';
 import { useDisclosure } from "@heroui/react";
 
 export default function TopBarbers() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const [selectedBarber, setSelectedBarber] = useState<typeof BARBERS[number] | null>(null);
+    const [barbers, setBarbers] = React.useState<any[]>([]);
+    const [selectedBarber, setSelectedBarber] = useState<any>(null);
+    const [loading, setLoading] = React.useState(true);
 
-    const handleBarberClick = (barber: typeof BARBERS[number]) => {
+    React.useEffect(() => {
+        const loadBarbers = async () => {
+            try {
+                const data = await getBarbers();
+                // Map the dynamic data to the format expected by the modal
+                const transformed = data.map(b => ({
+                    ...b,
+                    image: b.imageUrl,
+                    description: b.role,
+                    coverImage: '/hero_bg.png', // Default cover
+                    socials: b.socials || {
+                        whatsapp: '',
+                        tiktok: '',
+                        instagram: ''
+                    }
+                }));
+                setBarbers(transformed);
+            } catch (error) {
+                console.error("Error loading top barbers:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadBarbers();
+    }, []);
+
+    const handleBarberClick = (barber: any) => {
         setSelectedBarber(barber);
         onOpen();
     };
+
+    if (loading) return null; // Or a skeleton
+    if (barbers.length === 0) return null;
 
     return (
         <div className="mt-16 mb-20">
             <h2 className="text-3xl font-black text-white mb-8">Nuestros Barberos</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {BARBERS.map((barber) => (
+                {barbers.map((barber) => (
                     <div
                         key={barber.id}
                         onClick={() => handleBarberClick(barber)}

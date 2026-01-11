@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Select, SelectItem, Spinner } from "@heroui/react";
-import { CheckCircle2, User, Clock, Scissors, AlertCircle, Trash2 } from "lucide-react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Select, SelectItem } from "@heroui/react";
+import { User, Clock, Scissors, Trash2, ChevronDown } from "lucide-react";
 import { updateAppointmentStatus, deleteAppointment } from '../actions';
 import { ScheduleItem } from '../types';
 
@@ -30,7 +30,6 @@ export default function EditAppointmentModal({
     const [isLoading, setIsLoading] = useState(false);
     const [status, setStatus] = useState<string>(appointment?.status || 'confirmed');
 
-    // Sync status when appointment changes
     React.useEffect(() => {
         if (appointment) {
             setStatus(appointment.status || 'confirmed');
@@ -46,14 +45,13 @@ export default function EditAppointmentModal({
             onOpenChange(false);
         } catch (error) {
             console.error(error);
-            alert('Error al actualizar');
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!appointment || !confirm('¿Estás seguro de eliminar esta cita? Esta acción no se puede deshacer.')) return;
+        if (!appointment || !confirm('¿Estás seguro de eliminar esta cita?')) return;
         setIsLoading(true);
         try {
             await deleteAppointment(appointment.id);
@@ -61,7 +59,6 @@ export default function EditAppointmentModal({
             onOpenChange(false);
         } catch (error) {
             console.error(error);
-            alert('Error al eliminar');
         } finally {
             setIsLoading(false);
         }
@@ -77,60 +74,62 @@ export default function EditAppointmentModal({
             placement="center"
             hideCloseButton
             classNames={{
-                base: "bg-zinc-950 border border-zinc-800 rounded-[2rem] overflow-hidden sm:my-8",
+                base: "max-w-[400px] w-[92%] bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-[45px] border border-white/20 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.3)] overflow-hidden",
                 backdrop: "backdrop-blur-xl bg-black/40",
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <div className="relative">
-                        {/* Glass Refraction Header */}
-                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent z-10" />
-
-                        <ModalHeader className="flex flex-col gap-2 items-center justify-center pt-8 pb-6 border-b border-white/5 bg-white/[0.02]">
-                            <div className="w-14 h-14 rounded-full bg-zinc-800/50 flex items-center justify-center mb-2 border border-white/10">
-                                <Scissors className="text-zinc-400" size={24} />
+                        <ModalHeader className="flex flex-col gap-3 items-center justify-center pt-10 pb-6">
+                            <div
+                                className="w-16 h-16 rounded-2xl flex items-center justify-center text-black shadow-lg"
+                                style={{
+                                    background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                    boxShadow: '0 10px 20px rgba(208, 158, 30, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
+                                }}
+                            >
+                                <Scissors size={28} />
                             </div>
-                            <div className="text-center">
-                                <h2 className="text-lg font-black text-white uppercase tracking-tight">Gestionar Cita</h2>
-                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">ID: {appointment.id.slice(0, 8)}</p>
+                            <div className="text-center px-4">
+                                <h2 className="text-xl font-bold text-white tracking-tight">Gestionar Cita</h2>
+                                <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] mt-1">ID: {appointment.id.slice(0, 8)}</p>
                             </div>
                         </ModalHeader>
 
-                        <ModalBody className="p-6 gap-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <InfoBox
-                                    label="Cliente"
-                                    value={appointment.clientName || 'N/A'}
-                                    icon={<User size={14} />}
-                                />
-                                <InfoBox
-                                    label="Hora"
-                                    value={appointment.time}
-                                    icon={<Clock size={14} />}
-                                />
+                        <ModalBody className="px-6 gap-5"> {/* Reducido padding lateral del body de 8 a 6 */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <InfoBox label="Cliente" value={appointment.clientName || 'N/A'} icon={<User size={14} />} />
+                                <InfoBox label="Hora" value={appointment.time} icon={<Clock size={14} />} />
                             </div>
 
-                            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/5">
-                                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block mb-1">Servicio</label>
+                            <div className="p-3 rounded-[1.5rem] bg-white/5 border border-white/10 backdrop-blur-sm">
+                                <label className="text-[10px] text-white/30 font-bold uppercase tracking-widest block mb-1">Servicio</label>
                                 <p className="text-sm font-bold text-white">{appointment.service}</p>
-                                <p className="text-xs text-zinc-400 mt-0.5">{appointment.duration || '45 min'} con {appointment.barberName || 'Barbero'}</p>
+                                <p className="text-xs text-white/40 mt-0.5">{appointment.duration || '45 min'} • {appointment.barberName}</p>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Estado</label>
+                                <label className="text-[10px] text-white/30 font-bold uppercase tracking-widest ml-1">Estado de la Cita</label>
                                 <Select
                                     selectedKeys={[status]}
                                     onChange={(e) => setStatus(e.target.value)}
+                                    variant="flat"
+                                    disableSelectorIconRotation
+                                    selectorIcon={<ChevronDown size={18} className="text-white/50" />}
                                     classNames={{
-                                        trigger: "bg-zinc-900 border-zinc-800",
-                                        popoverContent: "bg-zinc-900 border-zinc-800"
+                                        // Padding horizontal reducido a px-2.5 para más espacio de texto
+                                        trigger: "bg-white/5 border border-white/10 rounded-2xl h-12 flex items-center px-2.5",
+                                        value: "text-white font-medium text-sm",
+                                        innerWrapper: "flex items-center",
+                                        selectorIcon: "relative right-1",
+                                        popoverContent: "bg-zinc-900/90 backdrop-blur-xl border border-white/10 rounded-2xl"
                                     }}
                                 >
                                     {STATUS_OPTIONS.map((opt) => (
-                                        <SelectItem key={opt.value} textValue={opt.label}>
+                                        <SelectItem key={opt.value} textValue={opt.label} className="text-white hover:bg-white/10">
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full bg-${opt.color}-500`} />
+                                                <div className={`w-2 h-2 rounded-full bg-${opt.color}-500 shadow-[0_0_8px_rgba(0,0,0,0.5)]`} />
                                                 <span>{opt.label}</span>
                                             </div>
                                         </SelectItem>
@@ -139,29 +138,34 @@ export default function EditAppointmentModal({
                             </div>
                         </ModalBody>
 
-                        <ModalFooter className="p-6 pt-0 flex flex-col gap-3">
-                            <div className="flex gap-3">
+                        <ModalFooter className="p-6 pt-2 flex flex-col gap-3">
+                            <div className="flex gap-3 w-full">
                                 <Button
-                                    className="flex-1 bg-primary text-black font-bold"
-                                    onPress={handleUpdate}
                                     isLoading={isLoading}
+                                    onPress={handleUpdate}
+                                    className="flex-[4] h-12 rounded-2xl font-bold text-black transition-all duration-300"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                        boxShadow: '0 10px 20px rgba(208, 158, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                                    }}
                                 >
                                     Guardar Cambios
                                 </Button>
+
                                 <Button
                                     isIconOnly
-                                    className="bg-red-500/10 text-red-500 border border-red-500/20"
                                     onPress={handleDelete}
                                     isDisabled={isLoading}
+                                    className="flex-1 h-12 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all backdrop-blur-md flex items-center justify-center"
                                 >
                                     <Trash2 size={20} />
                                 </Button>
                             </div>
+
                             <Button
                                 variant="light"
-                                className="w-full text-zinc-500 font-bold uppercase tracking-widest text-xs h-8"
                                 onPress={() => onClose()}
-                                isDisabled={isLoading}
+                                className="w-full text-white/40 font-bold uppercase tracking-widest text-[10px] h-10 hover:text-white transition-colors"
                             >
                                 Cancelar
                             </Button>
@@ -174,10 +178,10 @@ export default function EditAppointmentModal({
 }
 
 const InfoBox = ({ label, value, icon }: { label: string, value: string, icon: React.ReactNode }) => (
-    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
-        <div className="flex items-center gap-2 mb-1 text-zinc-500">
+    <div className="p-2.5 rounded-[1.5rem] bg-white/5 border border-white/10 backdrop-blur-sm">
+        <div className="flex items-center gap-2 mb-1 text-white/30">
             {icon}
-            <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.15em]">{label}</span>
         </div>
         <p className="text-sm font-bold text-white truncate">{value}</p>
     </div>

@@ -87,7 +87,7 @@ const CalendarStrip: React.FC<CalendarStripProps> = ({ selectedDate }) => {
     }, [selectedDate]);
 
     return (
-        <div className="px-6 mt-6 space-y-4">
+        <div className="mt-6 space-y-4 px-4 md:px-8">
             {/* Month Header with Navigation */}
             <div className="flex items-center justify-between">
                 <button
@@ -109,32 +109,40 @@ const CalendarStrip: React.FC<CalendarStripProps> = ({ selectedDate }) => {
                 </button>
             </div>
 
-            {/* Days Strip */}
-            <div
-                ref={scrollContainerRef}
-                className="flex gap-3 overflow-x-auto no-scrollbar py-2 -mx-2 px-2"
-            >
-                {days.map((day, idx) => (
-                    <button
-                        key={idx}
-                        data-selected={day.isSelected}
-                        onClick={() => handleDateUpdate(parseISO(day.fullDate))}
-                        className={`flex flex-col items-center justify-center min-w-[64px] h-20 rounded-2xl transition-all flex-shrink-0 ${day.isSelected
-                            ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105'
-                            : 'bg-card-dark border border-zinc-800/50 text-zinc-500 hover:border-primary/50 hover:text-zinc-300'
-                            }`}
-                    >
-                        <span className={`text-[10px] font-bold tracking-widest mb-1 ${day.isSelected ? 'opacity-90' : 'opacity-70'}`}>
-                            {day.dayName}
-                        </span>
-                        <span className={`text-xl font-bold ${day.isSelected ? 'text-white' : 'text-zinc-300'}`}>
-                            {day.dayNumber}
-                        </span>
-                        {day.isToday && !day.isSelected && (
-                            <div className="w-1 h-1 rounded-full bg-primary mt-1"></div>
-                        )}
-                    </button>
-                ))}
+            {/* Days Strip with Full-Bleed Gradient Fades */}
+            <div className="relative group overflow-hidden">
+                {/* Left Fade Overlay */}
+                <div className="absolute left-0 top-0 bottom-0 w-16 z-20 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent pointer-events-none" />
+
+                {/* Right Fade Overlay */}
+                <div className="absolute right-0 top-0 bottom-0 w-16 z-20 bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-transparent pointer-events-none" />
+
+                <div
+                    ref={scrollContainerRef}
+                    className="flex gap-3 overflow-x-auto no-scrollbar py-2"
+                >
+                    {days.map((day, idx) => (
+                        <button
+                            key={idx}
+                            data-selected={day.isSelected}
+                            onClick={() => handleDateUpdate(parseISO(day.fullDate))}
+                            className={`flex flex-col items-center justify-center min-w-[64px] h-20 rounded-2xl transition-all flex-shrink-0 ${day.isSelected
+                                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105'
+                                : 'bg-card-dark border border-zinc-800/50 text-zinc-500 hover:border-primary/50 hover:text-zinc-300'
+                                }`}
+                        >
+                            <span className={`text-[10px] font-bold tracking-widest mb-1 ${day.isSelected ? 'opacity-90' : 'opacity-70'}`}>
+                                {day.dayName}
+                            </span>
+                            <span className={`text-xl font-bold ${day.isSelected ? 'text-white' : 'text-zinc-300'}`}>
+                                {day.dayNumber}
+                            </span>
+                            {day.isToday && !day.isSelected && (
+                                <div className="w-1 h-1 rounded-full bg-primary mt-1"></div>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
         </div>
     );

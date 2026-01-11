@@ -1,244 +1,271 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ScheduleItem } from '../types';
-import { MOCK_BARBERS, MOCK_TIME_SLOTS } from '@/app/constants/booking';
-import { format, parseISO, isPast, set, startOfToday, isBefore, isSameDay } from 'date-fns';
+import { MOCK_TIME_SLOTS } from '@/app/constants/booking';
+import { format, parseISO, startOfToday, isBefore, isSameDay, set } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Lock, Edit, Plus, Trash2, User } from 'lucide-react';
-import { blockSlot } from '../actions';
+import { Lock, Edit, Scissors, User } from 'lucide-react';
+import { blockSlot, deleteAppointment } from '../actions';
 import { useRouter } from 'next/navigation';
 import EditAppointmentModal from './EditAppointmentModal';
 import BlockSlotModal from './BlockSlotModal';
 import UnblockSlotModal from './UnblockSlotModal';
-import { deleteAppointment } from '../actions';
 
 interface TimelineProps {
-    appointments: any[];
+    appointments: any[]; // Usamos any[] para flexibilidad si vienen datos crudos, o ScheduleItem[] si ya están tipados
     selectedDate: string;
     selectedBarberId: string;
 }
 
 const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selectedBarberId }) => {
     const router = useRouter();
-    // selectedBarberId is now a prop
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<ScheduleItem | null>(null);
-
-    // Block Modal State
     const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
     const [slotToBlock, setSlotToBlock] = useState<string | null>(null);
     const [isBlocking, setIsBlocking] = useState(false);
-
-    // Unblock Modal State
     const [isUnblockModalOpen, setIsUnblockModalOpen] = useState(false);
     const [appointmentToUnblock, setAppointmentToUnblock] = useState<ScheduleItem | null>(null);
     const [isUnblocking, setIsUnblocking] = useState(false);
+    const [currentTimePos, setCurrentTimePos] = useState<number | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    const handleBlockSlot = (time: string) => {
-        setSlotToBlock(time);
-        setIsBlockModalOpen(true);
+    // Función que faltaba en el código anterior
+    const handleSuccess = () => {
+        router.refresh();
     };
+
+    // Lógica del indicador de tiempo corregida para evitar errores con elementos hijos
+    useEffect(() => {
+        const isToday = isSameDay(parseISO(selectedDate), new Date());
+        if (!isToday) {
+            setCurrentTimePos(null);
+            return;
+        }
+
+        const updatePosition = () => {
+            if (!containerRef.current) return;
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinutes = now.getMinutes();
+
+            // Seleccionamos solo las filas de tiempo, ignorando el indicador absoluto
+            const slotElements = containerRef.current.querySelectorAll('.time-slot-row');
+            let currentSlotIdx = -1;
+
+            for (let i = 0; i < MOCK_TIME_SLOTS.length; i++) {
+                const [timePart, meridiem] = MOCK_TIME_SLOTS[i].time.split(' ');
+                let [h] = timePart.split(':').map(Number);
+                if (meridiem === 'PM' && h !== 12) h += 12;
+                if (meridiem === 'AM' && h === 12) h = 0;
+
+                if (h === currentHour) {
+                    currentSlotIdx = i;
+                    break;
+                }
+            }
+
+            if (currentSlotIdx !== -1 && currentSlotIdx < slotElements.length) {
+                const currentSlotEl = slotElements[currentSlotIdx] as HTMLElement;
+                const nextSlotEl = slotElements[currentSlotIdx + 1] as HTMLElement;
+                const startTop = currentSlotEl.offsetTop;
+
+                if (nextSlotEl) {
+                    const diff = nextSlotEl.offsetTop - startTop;
+                    setCurrentTimePos(startTop + (diff * (currentMinutes / 60)));
+                } else {
+                    setCurrentTimePos(startTop + (currentSlotEl.offsetHeight * (currentMinutes / 60)));
+                }
+            }
+        };
+
+        updatePosition();
+        const interval = setInterval(updatePosition, 60000);
+        return () => clearInterval(interval);
+    }, [selectedDate]);
 
     const confirmBlockSlot = async () => {
         if (!slotToBlock) return;
-
         setIsBlocking(true);
         try {
-            // If specific barber is selected, block for that barber. Otherwise default behavior (maybe 'b1' or global block?)
-            // For now, if "All" is selected, we might default to the first barber or handle it in backend.
-            // The user request implies admin can manage specific barber schedules.
-            // Let's pass the selectedBarberId if it's not 'all', otherwise maybe default to 'b1' or require selection?
-            // Existing backend `blockSlot` defaults to 'b1'.
             const barberIdToBlock = selectedBarberId === 'all' ? 'b1' : selectedBarberId;
             await blockSlot(selectedDate, slotToBlock, barberIdToBlock);
-            router.refresh();
+            handleSuccess();
             setIsBlockModalOpen(false);
-            setSlotToBlock(null);
         } catch (e) {
             console.error(e);
-            alert('Error al bloquear slot');
         } finally {
             setIsBlocking(false);
         }
     };
 
-    const handleUnblockSlot = (appointment: ScheduleItem) => {
-        setAppointmentToUnblock(appointment);
-        setIsUnblockModalOpen(true);
-    };
-
     const confirmUnblockSlot = async () => {
         if (!appointmentToUnblock) return;
-
         setIsUnblocking(true);
         try {
             await deleteAppointment(appointmentToUnblock.id);
-            router.refresh();
+            handleSuccess();
             setIsUnblockModalOpen(false);
-            setAppointmentToUnblock(null);
         } catch (e) {
             console.error(e);
-            alert('Error al bloquear slot');
         } finally {
             setIsUnblocking(false);
         }
     };
 
-    const handleEditAppointment = (appointment: ScheduleItem) => {
-        setSelectedAppointment(appointment);
-        setIsEditModalOpen(true);
-    };
-
-    const handleSuccess = () => {
-        router.refresh();
-    };
-
-    // Helper to check if a specific time string (09:00 AM) on the selected date is in the past
     const isSlotInPast = (timeStr: string) => {
         const selectedDateObj = parseISO(selectedDate);
         const now = new Date();
-
-        // If selected date is in the past (yesterday etc), all slots are past
         if (isBefore(selectedDateObj, startOfToday())) return true;
-
-        // If selected date is TODAY, we need to compare times
         if (isSameDay(selectedDateObj, now)) {
             const [timePart, meridiem] = timeStr.split(' ');
             let [hours, minutes] = timePart.split(':').map(Number);
-
             if (meridiem === 'PM' && hours !== 12) hours += 12;
             if (meridiem === 'AM' && hours === 12) hours = 0;
 
             const slotDate = set(now, { hours, minutes, seconds: 0, milliseconds: 0 });
             return isBefore(slotDate, now);
         }
-
-        // Future dates
         return false;
     };
 
-
-    // Appointments are already filtered from parent
-    const appointmentMap = new Map(appointments.map(apt => [apt.time, apt]));
-
     const timelineItems = MOCK_TIME_SLOTS.map(slot => {
-        // Find ALL appointments for this time slot
         const slotData = appointments.filter(apt => apt.time === slot.time);
         const isPastSlot = isSlotInPast(slot.time);
-
         return {
             slotId: slot.id,
             time: slot.time,
             isPast: isPastSlot,
-            appointments: slotData.map(apt => ({
-                ...apt,
-                type: 'appointment',
-                icon: 'content_cut',
-                isPast: isPastSlot
-            } as ScheduleItem)),
-            availableItem: {
-                id: slot.id,
-                time: slot.time,
-                type: 'available',
-                isPast: isPastSlot
-            } as ScheduleItem
+            appointments: slotData.map(apt => ({ ...apt, isPast: isPastSlot } as ScheduleItem)),
         };
     });
 
-    const humanDate = format(parseISO(selectedDate), 'MMM d, yyyy', { locale: es }).toUpperCase();
+    const humanDate = format(parseISO(selectedDate), "EEEE, d 'de' MMMM", { locale: es }).toUpperCase();
 
     return (
-        <div className="px-6 mt-8 pb-32">
-            <div className="flex flex-col gap-4 mb-6">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold">Agenda del Día</h2>
-                    <div className="px-3 py-1 bg-slate-800/80 rounded-full border border-slate-700">
-                        <span className="text-[10px] font-bold text-primary tracking-widest">{humanDate}</span>
-                    </div>
+        <div className="px-4 md:px-8 mt-10 pb-32">
+            <div className="flex justify-between items-center mb-10">
+                <h2 className="text-2xl font-black text-white tracking-tight">Agenda del Día</h2>
+                <div
+                    className="px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-md shadow-lg"
+                    style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                >
+                    <span className="text-[10px] font-black text-[#E5B454] tracking-[0.2em]">{humanDate}</span>
                 </div>
             </div>
 
-            <div className="space-y-6 relative">
-                {timelineItems.map((slotItem, idx) => (
-                    <div key={slotItem.slotId + idx} className={`relative flex gap-4 ${slotItem.isPast ? 'opacity-50 grayscale' : ''}`}>
+            <div ref={containerRef} className="space-y-8 relative">
+                {/* Indicador AHORA */}
+                {currentTimePos !== null && (
+                    <div
+                        className="absolute left-0 right-0 z-20 pointer-events-none flex items-center gap-3"
+                        style={{ top: `${currentTimePos}px`, transition: 'top 1s cubic-bezier(0.23, 1, 0.32, 1)' }}
+                    >
+                        <div className="w-16 flex justify-end">
+                            <span className="text-[9px] font-black text-[#E5B454] bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#E5B454]/30 shadow-2xl">
+                                AHORA
+                            </span>
+                        </div>
+                        <div className="flex-1 flex items-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#E5B454] shadow-[0_0_15px_rgba(229,180,84,0.8)]" />
+                            <div className="flex-1 h-[1.5px] bg-gradient-to-r from-[#E5B454] to-transparent opacity-40" />
+                        </div>
+                    </div>
+                )}
 
-                        {/* Time Column */}
-                        <div className="w-16 flex flex-col items-center pt-2">
-                            <span className={`text-xs font-bold ${slotItem.appointments.length === 0 ? 'text-slate-500' : 'text-white'}`}>
+                {timelineItems.map((slotItem, idx) => (
+                    <div
+                        key={slotItem.slotId + idx}
+                        className={`time-slot-row flex gap-6 transition-all duration-500 ${slotItem.isPast ? 'opacity-30 grayscale-[0.8]' : ''}`}
+                    >
+                        {/* Columna de Hora */}
+                        <div className="w-16 flex flex-col items-center pt-3">
+                            <span className={`text-[11px] font-black tracking-tighter ${slotItem.appointments.length === 0 ? 'text-white/20' : 'text-white/80'}`}>
                                 {slotItem.time}
                             </span>
-                            {/* Vertical Line Connector (optional/visual) */}
                             {idx !== timelineItems.length - 1 && (
-                                <div className="w-[1px] h-full bg-slate-800/50 mt-2 min-h-[40px]"></div>
+                                <div className="w-[1.5px] h-full bg-gradient-to-b from-white/10 to-transparent mt-3 min-h-[60px]" />
                             )}
                         </div>
 
-                        {/* Content Column */}
-                        <div className="flex-1 flex flex-row gap-3 overflow-x-auto pb-2">
+                        {/* Content Liquid Glass */}
+                        <div className="flex-1 flex flex-row gap-4 overflow-x-auto pb-4 custom-scrollbar">
                             {slotItem.appointments.length > 0 ? (
                                 slotItem.appointments.map((item) => (
                                     <div
                                         key={item.id}
-                                        className={`relative group p-4 rounded-2xl border transition-all min-w-[280px] flex-1 ${item.status === 'blocked'
-                                            ? 'bg-red-900/10 border-red-500/20 text-red-400'
-                                            : item.status === 'confirmed'
-                                                ? 'bg-primary/10 border-primary/20 text-white'
-                                                : 'bg-card-dark border-slate-800/50 text-white'
-                                            }`}
+                                        className="relative group p-5 rounded-[2.5rem] border transition-all duration-500 min-w-[300px] flex-1"
+                                        style={{
+                                            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
+                                            backdropFilter: 'blur(30px) saturate(180%)',
+                                            borderColor: item.status === 'blocked' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.12)',
+                                            boxShadow: '0 15px 35px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.2)'
+                                        }}
                                     >
-                                        {/* Edit Button (Only if not past) */}
-                                        {!item.isPast && item.status !== 'blocked' && (
-                                            <button
-                                                onClick={() => handleEditAppointment(item)}
-                                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-all opacity-0 group-hover:opacity-100 z-10"
-                                            >
-                                                <Edit size={14} />
-                                            </button>
-                                        )}
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
+                                                    <User size={18} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-white text-base truncate max-w-[120px]">{item.clientName}</h4>
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${item.status === 'confirmed' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/10' : 'text-white/40 border-white/10'
+                                                        }`}>
+                                                        {item.status}
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                                        {/* Unblock Button (Only if blocked and not past) */}
-                                        {!item.isPast && item.status === 'blocked' && (
-                                            <button
-                                                onClick={() => handleUnblockSlot(item)}
-                                                className="absolute top-4 right-4 p-2 text-primary hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-all z-10"
-                                                title="Desbloquear horario"
-                                            >
-                                                <Lock size={14} className="opacity-50" />
-                                            </button>
-                                        )}
-
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h4 className="font-bold text-base line-clamp-1">{item.clientName}</h4>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                                {item.status !== 'blocked' ? (
+                                                    <button
+                                                        onClick={() => { setSelectedAppointment(item); setIsEditModalOpen(true); }}
+                                                        className="flex items-center justify-center p-2.5 bg-white/10 hover:bg-white text-white hover:text-black rounded-xl border border-white/10 active:scale-90 transition-all"
+                                                    >
+                                                        <Edit size={14} />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => { setAppointmentToUnblock(item); setIsUnblockModalOpen(true); }}
+                                                        className="flex items-center justify-center p-2.5 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 active:scale-90 transition-all"
+                                                    >
+                                                        <Lock size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-zinc-400">Servicio:</span>
-                                                <span className="text-sm font-medium">{item.service}</span>
+
+                                        <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/5">
+                                            <div className="text-[10px] text-white/30 uppercase font-bold tracking-tight">
+                                                Servicio: <span className="text-white/80 block text-[11px] mt-0.5 truncate">{item.service}</span>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-zinc-400">Barbero:</span>
-                                                <span className="text-sm font-medium">{item.barberName || 'Sin asignar'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-700/30">
-                                                <span className="text-[10px] uppercase tracking-wide text-zinc-500">{item.duration || '45 min'}</span>
+                                            <div className="text-[10px] text-white/30 uppercase font-bold tracking-tight">
+                                                Barbero: <span className="text-white/80 block text-[11px] mt-0.5 truncate">{item.barberName}</span>
                                             </div>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className={`flex items-center justify-between h-14 border border-dashed border-slate-800/30 rounded-2xl px-4 text-slate-600 bg-zinc-900/20 transition-all ${!slotItem.isPast ? 'hover:border-slate-700 hover:bg-zinc-800/30' : ''}`}>
-                                    <span className="text-xs font-medium">Disponible</span>
+                                <div
+                                    className={`flex flex-1 items-center justify-between h-20 border border-dashed rounded-[2rem] px-6 transition-all duration-300 ${!slotItem.isPast
+                                        ? 'border-white/10 bg-white/[0.02] hover:bg-white/5 hover:border-white/20'
+                                        : 'border-white/5'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/10">
+                                            <Scissors size={14} />
+                                        </div>
+                                        <span className="text-xs font-bold text-white/20 uppercase tracking-widest">Disponible</span>
+                                    </div>
 
                                     {!slotItem.isPast && (
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleBlockSlot(slotItem.time)}
-                                                className="p-1.5 hover:bg-red-500/10 text-slate-600 hover:text-red-500 rounded-lg transition-colors"
-                                                title="Bloquear horario"
-                                            >
-                                                <Lock size={14} />
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => { setSlotToBlock(slotItem.time); setIsBlockModalOpen(true); }}
+                                            className="flex items-center justify-center p-2.5 bg-white/5 hover:bg-[#D09E1E]/10 text-white/10 hover:text-[#D09E1E] rounded-xl border border-transparent hover:border-[#D09E1E]/20 transition-all"
+                                        >
+                                            <Lock size={14} />
+                                        </button>
                                     )}
                                 </div>
                             )}
@@ -247,13 +274,13 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
                 ))}
             </div>
 
+            {/* Modales unificados */}
             <EditAppointmentModal
                 isOpen={isEditModalOpen}
                 onOpenChange={setIsEditModalOpen}
                 appointment={selectedAppointment}
                 onSuccess={handleSuccess}
             />
-
             <BlockSlotModal
                 isOpen={isBlockModalOpen}
                 onOpenChange={setIsBlockModalOpen}
@@ -261,7 +288,6 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
                 onConfirm={confirmBlockSlot}
                 isLoading={isBlocking}
             />
-
             <UnblockSlotModal
                 isOpen={isUnblockModalOpen}
                 onOpenChange={setIsUnblockModalOpen}

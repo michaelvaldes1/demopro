@@ -1,6 +1,8 @@
 import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";
+import AdminLayoutClient from "./components/AdminLayoutClient";
 import { requireAdmin } from "@/lib/auth";
+import { adminAuth } from "@/lib/firebaseAdmin";
 
 export default async function AdminLayout({
     children,
@@ -10,33 +12,18 @@ export default async function AdminLayout({
     // Server-side protection
     const session = await requireAdmin();
 
+    // Fetch the full user from Firebase Auth to get the most accurate photoURL
+    const userRecord = await adminAuth.getUser(session.uid);
+
     const userData = {
-        name: session.name || 'Admin',
-        email: session.email,
-        picture: session.picture,
+        name: userRecord.displayName || session.name || 'Admin',
+        email: session.email || '',
+        picture: userRecord.photoURL || userRecord.providerData?.[0]?.photoURL || `https://ui-avatars.com/api/?name=${userRecord.displayName || 'Admin'}&background=random`,
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 font-sans">
-            {/* Sidebar fixed */}
-            <Sidebar />
-
-            {/* Main content area */}
-            <div className="pl-64 flex flex-col min-h-screen">
-                <Header user={userData} />
-
-                <main className="flex-1 p-8 bg-zinc-950/50">
-                    <div className="max-w-7xl mx-auto">
-                        {children}
-                    </div>
-                </main>
-
-                <footer className="py-6 px-8 border-t border-zinc-900 text-center">
-                    <p className="text-zinc-600 text-xs">
-                        &copy; {new Date().getFullYear()} MiagoBarber Admin Panel. Todos los derechos reservados.
-                    </p>
-                </footer>
-            </div>
-        </div>
+        <AdminLayoutClient user={userData}>
+            {children}
+        </AdminLayoutClient>
     );
 }

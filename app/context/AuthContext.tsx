@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (currentUser) {
                 // Obtener el ID Token y guardarlo en la cookie
                 const token = await getIdToken(currentUser);
-                document.cookie = `__session=${token}; path=/; max-age=3600; Secure; SameSite=Strict`;
+                const isSecure = window.location.protocol === 'https:';
+                document.cookie = `__session=${token}; path=/; max-age=3600; ${isSecure ? 'Secure;' : ''} SameSite=Lax`;
             } else {
                 // Limpiar la cookie al cerrar sesión
                 document.cookie = "__session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
