@@ -36,7 +36,7 @@ const BarberSelector: React.FC<BarberSelectorProps> = ({ barbers, selectedBarber
                                 )}
                             </div>
                             <span className={`text-[13px] font-bold ${isSelected ? 'text-primary' : 'text-zinc-400'}`}>
-                                {barber.name}
+                                {barber.name.split(' ')[0]}
                             </span>
                         </button>
                     );

@@ -14,6 +14,7 @@ const menuItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
     { name: 'Barberos', href: '/admin/barbers', icon: Scissors },
+    { name: 'Servicios', href: '/admin/servicespage', icon: Scissors },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
 ];
 

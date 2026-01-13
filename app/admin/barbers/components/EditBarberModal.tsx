@@ -1,50 +1,80 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
 import { Scissors } from 'lucide-react';
+import { updateBarber } from '../../actions';
 
 interface EditBarberModalProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     barber: any;
-    name: string;
-    role: string;
-    image: string;
-    whatsapp: string;
-    instagram: string;
-    tiktok: string;
-    onNameChange: (value: string) => void;
-    onRoleChange: (value: string) => void;
-    onImageChange: (value: string) => void;
-    onWhatsappChange: (value: string) => void;
-    onInstagramChange: (value: string) => void;
-    onTiktokChange: (value: string) => void;
-    onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onUpdate: (onClose: () => void) => void;
-    isSubmitting: boolean;
-    fileInputRef: React.RefObject<HTMLInputElement>;
+    onUpdate: () => Promise<void>;
 }
 
 export default function EditBarberModal({
     isOpen,
     onOpenChange,
-    name,
-    role,
-    image,
-    whatsapp,
-    instagram,
-    tiktok,
-    onNameChange,
-    onRoleChange,
-    onWhatsappChange,
-    onInstagramChange,
-    onTiktokChange,
-    onFileChange,
-    onUpdate,
-    isSubmitting,
-    fileInputRef
+    barber,
+    onUpdate
 }: EditBarberModalProps) {
+    // Internal state management
+    const [name, setName] = useState("");
+    const [role, setRole] = useState("");
+    const [image, setImage] = useState("");
+    const [whatsapp, setWhatsapp] = useState("");
+    const [instagram, setInstagram] = useState("");
+    const [tiktok, setTiktok] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Populate form when barber changes
+    useEffect(() => {
+        if (barber) {
+            setName(barber.name || "");
+            setRole(barber.role || "");
+            setImage(barber.imageUrl || "");
+            setWhatsapp(barber.socials?.whatsapp || "");
+            setInstagram(barber.socials?.instagram || "");
+            setTiktok(barber.socials?.tiktok || "");
+        }
+    }, [barber]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 1024 * 1024) {
+                alert("La imagen es demasiado grande. Máx 1MB.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => setImage(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleUpdate = async () => {
+        if (!name || !role || !image || !barber) return;
+
+        setIsSubmitting(true);
+        try {
+            await updateBarber(barber.id, {
+                name,
+                role,
+                imageUrl: image,
+                instagram: instagram || '',
+                whatsapp: whatsapp || '',
+                tiktok: tiktok || ''
+            });
+            await onUpdate();
+            onOpenChange(false);
+        } catch (error) {
+            console.error("Error updating barber:", error);
+            alert("Error al actualizar el barbero. Por favor intenta de nuevo.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
     return (
         <Modal
             isOpen={isOpen}
@@ -90,7 +120,7 @@ export default function EditBarberModal({
                                 <input
                                     type="text"
                                     value={name}
-                                    onChange={(e) => onNameChange(e.target.value)}
+                                    onChange={(e) => setName(e.target.value)}
                                     placeholder="Nombre del barbero"
                                     className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#E5B454]/40 transition-all"
                                 />
@@ -102,7 +132,7 @@ export default function EditBarberModal({
                                 <input
                                     type="text"
                                     value={role}
-                                    onChange={(e) => onRoleChange(e.target.value)}
+                                    onChange={(e) => setRole(e.target.value)}
                                     placeholder="Ej. Especialista en cortes clásicos"
                                     className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#E5B454]/40 transition-all"
                                 />
@@ -121,7 +151,7 @@ export default function EditBarberModal({
                                             </div>
                                         )}
                                     </div>
-                                    <input ref={fileInputRef} type="file" accept="image/*" onChange={onFileChange} className="hidden" />
+                                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
@@ -138,7 +168,7 @@ export default function EditBarberModal({
                                 <input
                                     type="url"
                                     value={whatsapp}
-                                    onChange={(e) => onWhatsappChange(e.target.value)}
+                                    onChange={(e) => setWhatsapp(e.target.value)}
                                     placeholder="https://wa.me/..."
                                     className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#E5B454]/40 transition-all"
                                 />
@@ -150,7 +180,7 @@ export default function EditBarberModal({
                                 <input
                                     type="url"
                                     value={instagram}
-                                    onChange={(e) => onInstagramChange(e.target.value)}
+                                    onChange={(e) => setInstagram(e.target.value)}
                                     placeholder="https://instagram.com/..."
                                     className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#E5B454]/40 transition-all"
                                 />
@@ -162,7 +192,7 @@ export default function EditBarberModal({
                                 <input
                                     type="url"
                                     value={tiktok}
-                                    onChange={(e) => onTiktokChange(e.target.value)}
+                                    onChange={(e) => setTiktok(e.target.value)}
                                     placeholder="https://tiktok.com/@..."
                                     className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#E5B454]/40 transition-all"
                                 />
@@ -187,7 +217,7 @@ export default function EditBarberModal({
 
                             {/* Botón Actualizar - Estilo Oro Líquido con Relieve */}
                             <Button
-                                onPress={() => onUpdate(onClose)}
+                                onPress={handleUpdate}
                                 isLoading={isSubmitting}
                                 isDisabled={!name || !role || !image}
                                 className="flex-[1.5] h-12 rounded-2xl font-bold text-black text-sm transition-all duration-300"

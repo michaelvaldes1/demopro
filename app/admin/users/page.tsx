@@ -308,67 +308,148 @@ export default function UsersPage() {
             >
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent z-20" />
 
-                {/* CORRECCIÓN 2: Wrapper de scroll separado del contenedor visual */}
-                <div className="overflow-x-auto w-full">
+                {/* Wrapper de scroll que contiene TODA la tabla */}
+                <div className="overflow-x-auto w-full no-scrollbar">
                     {loading ? (
                         <div className="flex justify-center items-center h-80">
-                            <Spinner color="warning" size="lg" />
+                            {/* Spinner con Glow */}
+                            <div className="relative">
+                                <div className="w-12 h-12 border-4 border-[#E5B454] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(229,180,84,0.3)]"></div>
+                            </div>
                         </div>
                     ) : (
-                        <Table
-                            aria-label="Tabla de usuarios"
-                            removeWrapper
-                            bottomContent={
-                                pages > 0 ? (
-                                    <div className="flex w-full justify-center px-4 py-6 border-t border-white/5 sticky left-0">
-                                        <Pagination
-                                            isCompact
-                                            showControls
-                                            showShadow
-                                            color="warning"
-                                            page={page}
-                                            total={pages}
-                                            onChange={(page) => setPage(page)}
-                                            classNames={{
-                                                cursor: "bg-[#E5B454] text-black font-bold shadow-[0_0_15px_rgba(229,180,84,0.4)]",
-                                                item: "bg-transparent text-white/30 hover:text-white",
-                                                next: "text-white/30 hover:text-white",
-                                                prev: "text-white/30 hover:text-white",
-                                            }}
-                                        />
+                        <div className="min-w-[800px]">
+                            <table className="w-full border-collapse">
+                                {/* Table Header - Dark Glass */}
+                                <thead className="bg-black/20 border-b border-white/10 backdrop-blur-sm">
+                                    <tr>
+                                        {columns.map((column) => (
+                                            <th
+                                                key={column.uid}
+                                                className={`text-white/40 font-black uppercase text-[10px] tracking-[0.2em] h-14 text-left first:pl-8 last:pr-8 ${column.uid === 'user' ? 'min-w-[250px]' : 'min-w-[120px]'
+                                                    } ${column.uid === "actions" ? 'text-right' : ''}`}
+                                            >
+                                                {column.name}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+
+                                {/* Table Body */}
+                                <tbody>
+                                    {items.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={columns.length} className="text-center py-24">
+                                                <div className="flex flex-col items-center gap-4 text-white/20">
+                                                    <div className="p-4 rounded-full bg-white/5 border border-white/5">
+                                                        <User size={40} strokeWidth={1.5} />
+                                                    </div>
+                                                    <p className="text-sm font-bold uppercase tracking-widest">No se encontraron datos</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        items.map((item, index) => (
+                                            <tr
+                                                key={item.id}
+                                                className={`group transition-all duration-300 hover:bg-white/[0.03] ${index === items.length - 1 ? '' : 'border-b border-white/5'
+                                                    }`}
+                                            >
+                                                {columns.map((column) => (
+                                                    <td
+                                                        key={column.uid}
+                                                        className={`py-4 first:pl-8 last:pr-8 ${column.uid === "actions" ? 'text-right' : ''
+                                                            }`}
+                                                    >
+                                                        {renderCell(item, column.uid)}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {/* Pagination - Liquid Style */}
+                            {pages > 0 && (
+                                <div className="flex w-full justify-center px-4 py-8 border-t border-white/5">
+                                    <div className="flex items-center gap-2 p-1 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-md">
+
+                                        {/* Previous Button */}
+                                        <button
+                                            onClick={() => setPage(Math.max(1, page - 1))}
+                                            disabled={page === 1}
+                                            className="w-9 h-9 flex items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+
+                                        {/* Page Numbers */}
+                                        <div className="flex items-center gap-1 px-2">
+                                            {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => {
+                                                // Logic for truncation matches your original code
+                                                if (pages > 7) {
+                                                    if (
+                                                        pageNum === 1 ||
+                                                        pageNum === pages ||
+                                                        (pageNum >= page - 1 && pageNum <= page + 1)
+                                                    ) {
+                                                        return (
+                                                            <button
+                                                                key={pageNum}
+                                                                onClick={() => setPage(pageNum)}
+                                                                className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 ${page === pageNum
+                                                                        ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
+                                                                        : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
+                                                                    }`}
+                                                            >
+                                                                {pageNum}
+                                                            </button>
+                                                        );
+                                                    } else if (
+                                                        (pageNum === page - 2 && page > 3) ||
+                                                        (pageNum === page + 2 && page < pages - 2)
+                                                    ) {
+                                                        return (
+                                                            <span key={pageNum} className="text-white/20 px-1 font-bold text-xs">
+                                                                ...
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return null;
+                                                }
+
+                                                return (
+                                                    <button
+                                                        key={pageNum}
+                                                        onClick={() => setPage(pageNum)}
+                                                        className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 ${page === pageNum
+                                                                ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
+                                                                : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
+                                                            }`}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Next Button */}
+                                        <button
+                                            onClick={() => setPage(Math.min(pages, page + 1))}
+                                            disabled={page === pages}
+                                            className="w-9 h-9 flex items-center justify-center rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                ) : null
-                            }
-                            classNames={{
-                                th: "bg-black/20 text-white/40 font-bold uppercase text-[10px] tracking-[0.2em] border-b border-white/5 h-14 first:pl-8 last:pr-8",
-                                td: "py-4 border-b border-white/5 first:pl-8 last:pr-8 group-data-[last=true]:border-none",
-                                tr: "hover:bg-white/[0.02] transition-colors duration-200 group",
-                            }}
-                        >
-                            <TableHeader columns={columns}>
-                                {(column) => (
-                                    <TableColumn
-                                        key={column.uid}
-                                        align={column.uid === "actions" ? "end" : "start"}
-                                        className={column.uid === 'user' ? 'min-w-[250px]' : 'min-w-[120px]'}
-                                    >
-                                        {column.name}
-                                    </TableColumn>
-                                )}
-                            </TableHeader>
-                            <TableBody items={items} emptyContent={
-                                <div className="text-white/30 py-20 text-center w-full flex flex-col items-center gap-4">
-                                    <User size={48} strokeWidth={1} />
-                                    <p className="text-sm font-medium">No se encontraron usuarios</p>
                                 </div>
-                            }>
-                                {(item) => (
-                                    <TableRow key={item.id}>
-                                        {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

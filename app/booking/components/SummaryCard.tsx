@@ -29,8 +29,8 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAddService, setShowAddService] = useState(false);
 
-  const totalPrice = services.reduce((sum, s) => sum + s.price, 0);
-  const totalDuration = services.reduce((sum, s) => sum + s.duration, 0);
+  const totalPrice = services.reduce((sum, s) => sum + (s?.price || 0), 0);
+  const totalDuration = services.reduce((sum, s) => sum + (s?.duration || 0), 0);
 
   useEffect(() => {
     setIsExpanded(true);

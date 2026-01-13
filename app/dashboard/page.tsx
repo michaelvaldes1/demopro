@@ -1,35 +1,23 @@
-"use client";
-
-import React from 'react';
-import { useAuth } from "../context/AuthContext";
-import Login from "../components/auth/Login";
 import TopBar from "../components/shared/TopBar";
 import BottomNavBar from "../components/shared/BottomNavBar";
 import Dashboard from "./components/Dashboard";
-import { Spinner } from "@heroui/react";
+import DashboardWrapper from "./components/DashboardWrapper";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Dashboard | MiagoBarber',
+    description: 'Descubre nuestros servicios de barbería premium y conoce a nuestro equipo de barberos profesionales. Reserva tu cita en MiagoBarber.',
+    keywords: 'barbería, corte de cabello, barba, servicios de barbería, barberos profesionales',
+};
 
 export default function DashboardPage() {
-    const { user, loading } = useAuth();
-
-    if (loading) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <Spinner size="lg" color="warning" />
-            </div>
-        );
-    }
-
-    if (!user) {
-        return <Login />;
-    }
-
     return (
-        <>
+        <DashboardWrapper>
             <TopBar />
             <main className="pt-20 pb-28">
                 <Dashboard />
             </main>
             <BottomNavBar />
-        </>
+        </DashboardWrapper>
     );
 }

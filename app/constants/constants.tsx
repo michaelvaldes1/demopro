@@ -56,4 +56,5 @@ export const CATEGORIES: { label: string; value: string }[] = [
     { label: 'Cortes', value: 'Corte de Cabello' },
     { label: 'Barba', value: 'Arreglo de Barba' },
     { label: 'Facial', value: 'Facial' },
+    { label: 'Otros', value: 'Otros' },
 ];

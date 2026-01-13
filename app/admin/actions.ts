@@ -92,10 +92,20 @@ export async function updateBarber(id: string, barberData: any) {
         throw new Error('Todos los campos obligatorios (nombre, rol, imagen) deben estar presentes.');
     }
 
-    await adminDb.collection('barbers').doc(id).update({
-        ...barberData,
+    // Restructure to use socials object for consistency
+    const updateData = {
+        name: barberData.name,
+        role: barberData.role,
+        imageUrl: barberData.imageUrl,
+        socials: {
+            whatsapp: barberData.whatsapp || '',
+            instagram: barberData.instagram || '',
+            tiktok: barberData.tiktok || ''
+        },
         updatedAt: new Date().toISOString()
-    });
+    };
+
+    await adminDb.collection('barbers').doc(id).update(updateData);
     return { success: true };
 }
 
@@ -359,3 +369,60 @@ export async function getAdminUsers() {
         return [];
     }
 }
+
+// ============================================
+// SERVICES MANAGEMENT
+// ============================================
+
+export async function getServices() {
+    try {
+        const snapshot = await adminDb.collection('services').get();
+        const services = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        })) as any[];
+
+        if (services.length === 0) {
+            return [];
+        }
+        return services;
+    } catch (error) {
+        console.error('Error fetching services:', error);
+        return [];
+    }
+}
+
+export async function addService(serviceData: any) {
+    await getAdminCheck();
+
+    if (!serviceData.name || !serviceData.price || !serviceData.duration || !serviceData.category) {
+        throw new Error('Todos los campos obligatorios (nombre, precio, duración, categoría) deben estar presentes.');
+    }
+
+    const docRef = await adminDb.collection('services').add({
+        ...serviceData,
+        createdAt: new Date().toISOString()
+    });
+    return { id: docRef.id, success: true };
+}
+
+export async function updateService(id: string, serviceData: any) {
+    await getAdminCheck();
+
+    if (!serviceData.name || !serviceData.price || !serviceData.duration || !serviceData.category) {
+        throw new Error('Todos los campos obligatorios (nombre, precio, duración, categoría) deben estar presentes.');
+    }
+
+    await adminDb.collection('services').doc(id).update({
+        ...serviceData,
+        updatedAt: new Date().toISOString()
+    });
+    return { success: true };
+}
+
+export async function deleteService(id: string) {
+    await getAdminCheck();
+    await adminDb.collection('services').doc(id).delete();
+    return { success: true };
+}
+

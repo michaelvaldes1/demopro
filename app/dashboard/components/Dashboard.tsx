@@ -1,10 +1,9 @@
-"use client";
-
-import React from 'react';
+import React, { Suspense } from 'react';
 import Hero from './Hero';
 import Services from './Services';
 import TopBarbers from './TopBarbers';
 import FloatingActionButton from './FloatingActionButton';
+import ServicesSkeleton, { BarbersSkeleton } from './DashboardSkeletons';
 
 export default function Dashboard() {
     return (
@@ -16,8 +15,13 @@ export default function Dashboard() {
 
             {/* Contained Content */}
             <div className="max-w-7xl mx-auto px-6 w-full">
-                <Services />
-                <TopBarbers />
+                <Suspense fallback={<ServicesSkeleton />}>
+                    <Services />
+                </Suspense>
+
+                <Suspense fallback={<BarbersSkeleton />}>
+                    <TopBarbers />
+                </Suspense>
             </div>
 
             <FloatingActionButton />

@@ -57,7 +57,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
 
                 <Dropdown placement="bottom-end">
                     <DropdownTrigger>
-                        <button className="relative group outline-none">
+                        <button className="relative group outline-none" suppressHydrationWarning>
                             <div className="w-10 h-10 rounded-full border-2 border-[#D09E1E] overflow-hidden transition-transform group-hover:scale-105">
                                 {user?.picture ? (
                                     <img

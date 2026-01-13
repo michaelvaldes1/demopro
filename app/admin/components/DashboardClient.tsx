@@ -118,8 +118,8 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ stats, prevStats, app
                         <button
                             onClick={() => setSelectedBarberId('all')}
                             className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 duration-300 ${selectedBarberId === 'all'
-                                    ? 'text-black shadow-lg scale-100'
-                                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                                ? 'text-black shadow-lg scale-100'
+                                : 'text-white/40 hover:text-white hover:bg-white/5'
                                 }`}
                             style={selectedBarberId === 'all' ? {
                                 background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
@@ -140,8 +140,8 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ stats, prevStats, app
                                     key={barber.id}
                                     onClick={() => setSelectedBarberId(barber.id)}
                                     className={`px-5 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2 duration-300 ${selectedBarberId === barber.id
-                                            ? 'text-black shadow-lg scale-100'
-                                            : 'text-white/40 hover:text-white hover:bg-white/5'
+                                        ? 'text-black shadow-lg scale-100'
+                                        : 'text-white/40 hover:text-white hover:bg-white/5'
                                         }`}
                                     style={selectedBarberId === barber.id ? {
                                         background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
