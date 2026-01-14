@@ -19,8 +19,17 @@ export default async function Services() {
                         key={service.id}
                         className="flex-shrink-0 w-64 h-80 relative rounded-3xl overflow-hidden snap-start group"
                     >
-                        {/* Use a gradient background since we don't have service images */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                        {/* Background Image or Gradient */}
+                        {service.imageUrl ? (
+                            <Image
+                                src={service.imageUrl}
+                                alt={service.name}
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                        ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                        )}
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                         <div className="absolute bottom-6 left-6 right-6">

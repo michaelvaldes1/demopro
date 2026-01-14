@@ -5,4 +5,5 @@ export interface ServiceItem {
     description: string;
     price: number;
     duration: string;
+    imageUrl?: string;
 }

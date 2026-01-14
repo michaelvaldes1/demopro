@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { SERVICES } from '@/app/constants/constants';
 import { MOCK_BARBERS } from '@/app/constants/booking';
 import { format, subDays, parseISO } from 'date-fns';
+import { cache } from 'react';
 
 async function getAdminUser() {
     const cookieStore = await cookies();
@@ -52,7 +53,7 @@ const getBarberName = async (id: string): Promise<string> => {
     }
 };
 
-export async function getBarbers() {
+export const getBarbers = cache(async () => {
     try {
         const snapshot = await adminDb.collection('barbers').get();
         const barbers = snapshot.docs.map(doc => ({
@@ -68,7 +69,7 @@ export async function getBarbers() {
         console.error('Error fetching barbers:', error);
         return MOCK_BARBERS;
     }
-}
+});
 
 export async function addBarber(barberData: any) {
     await getAdminCheck();
@@ -115,7 +116,16 @@ export async function deleteBarber(id: string) {
     return { success: true };
 }
 
-export async function getDashboardData(date: string) {
+export async function toggleBarberStatus(id: string, currentStatus: boolean) {
+    await getAdminCheck();
+    await adminDb.collection('barbers').doc(id).update({
+        isAvailable: !currentStatus,
+        updatedAt: new Date().toISOString()
+    });
+    return { success: true };
+}
+
+export const getDashboardData = cache(async (date: string) => {
     const admin = await getAdminUser();
     if (!admin) throw new Error('Unauthorized');
 
@@ -194,7 +204,7 @@ export async function getDashboardData(date: string) {
             prevAppointments: []
         };
     }
-}
+});
 
 export async function getAllAppointments() {
     const admin = await getAdminUser();
@@ -401,6 +411,7 @@ export async function addService(serviceData: any) {
 
     const docRef = await adminDb.collection('services').add({
         ...serviceData,
+        imageUrl: serviceData.imageUrl || '',
         createdAt: new Date().toISOString()
     });
     return { id: docRef.id, success: true };
@@ -415,6 +426,7 @@ export async function updateService(id: string, serviceData: any) {
 
     await adminDb.collection('services').doc(id).update({
         ...serviceData,
+        imageUrl: serviceData.imageUrl || '',
         updatedAt: new Date().toISOString()
     });
     return { success: true };

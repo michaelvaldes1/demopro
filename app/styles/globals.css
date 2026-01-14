@@ -93,3 +93,12 @@ body {
 @utility border-card-dark {
     border-color: #27272a;
 }
+
+@layer base {
+  .maplibregl-popup-content {
+    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+    }
+  .maplibregl-popup-tip {
+    @apply hidden!;
+    }
+}

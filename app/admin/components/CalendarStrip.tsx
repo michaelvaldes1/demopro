@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     addMonths,
@@ -20,10 +20,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CalendarStripProps {
     selectedDate: string; // YYYY-MM-DD
+    onDateChange?: (date: string) => void;
 }
 
-const CalendarStrip: React.FC<CalendarStripProps> = ({ selectedDate }) => {
-    const router = useRouter();
+const CalendarStrip: React.FC<CalendarStripProps> = ({ selectedDate, onDateChange }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Current logic: The view is driven by the selectedDate.
@@ -50,10 +50,9 @@ const CalendarStrip: React.FC<CalendarStripProps> = ({ selectedDate }) => {
 
     const handleDateUpdate = (newDate: Date) => {
         const dateStr = format(newDate, 'yyyy-MM-dd');
-        const params = new URLSearchParams(window.location.search);
-        params.set('date', dateStr);
-        router.push(`/admin?${params.toString()}`);
-        router.refresh();
+        if (onDateChange) {
+            onDateChange(dateStr);
+        }
     };
 
     const handleNextMonth = () => {

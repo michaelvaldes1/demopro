@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ServiceItem } from '../../constants/types';
 import { Plus } from 'lucide-react';
 
@@ -9,7 +10,17 @@ interface ServiceCardProps {
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ item }) => {
     return (
-        <div className="group flex gap-4 rounded-xl bg-[#2a261a] p-4 transition-all hover:bg-[#343021] border border-transparent hover:border-[#edbc1d20] cursor-pointer">
+        <div className="group flex flex-col sm:flex-row gap-4 rounded-xl bg-[#2a261a] p-4 transition-all hover:bg-[#343021] border border-transparent hover:border-[#edbc1d20] cursor-pointer">
+            {item.imageUrl && (
+                <div className="relative w-full sm:w-24 h-40 sm:h-24 rounded-lg overflow-hidden shrink-0">
+                    <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                </div>
+            )}
             <div className="flex flex-1 flex-col justify-center">
                 <div className="flex justify-between items-start">
                     <h4 className="text-white text-base font-semibold leading-normal">{item.name}</h4>

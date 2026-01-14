@@ -20,10 +20,13 @@ export default async function BookingPage({ searchParams }: BookingPageProps) {
     const { serviceId, barberId } = await searchParams;
 
     // Fetch data server-side
-    const [barbers, services] = await Promise.all([
+    const [allBarbers, services] = await Promise.all([
         getBarbers(),
         getServices()
     ]);
+
+    // Filter active barbers only
+    const barbers = allBarbers.filter(b => b.isAvailable !== false);
 
     return (
         <DashboardWrapper>
