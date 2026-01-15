@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 
-// Trigger restart
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -20,8 +19,17 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+      },
     ],
   },
-};
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb', // Increased to support multiple portfolio images
+    },
+  },
+} as NextConfig;
 
 export default nextConfig;

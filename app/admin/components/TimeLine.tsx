@@ -15,9 +15,10 @@ interface TimelineProps {
     appointments: any[]; // Usamos any[] para flexibilidad si vienen datos crudos, o ScheduleItem[] si ya están tipados
     selectedDate: string;
     selectedBarberId: string;
+    barbers: any[];
 }
 
-const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selectedBarberId }) => {
+const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selectedBarberId, barbers }) => {
     const router = useRouter();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<ScheduleItem | null>(null);
@@ -88,7 +89,16 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
         if (!slotToBlock) return;
         setIsBlocking(true);
         try {
-            const barberIdToBlock = selectedBarberId === 'all' ? 'b1' : selectedBarberId;
+            // Si el filtro es 'all', usar el primer barbero disponible desde Firebase
+            let barberIdToBlock = selectedBarberId;
+            if (selectedBarberId === 'all') {
+                if (barbers.length > 0) {
+                    barberIdToBlock = barbers[0].id;
+                } else {
+                    console.error('No hay barberos disponibles');
+                    return;
+                }
+            }
             await blockSlot(selectedDate, slotToBlock, barberIdToBlock);
             handleSuccess();
             setIsBlockModalOpen(false);

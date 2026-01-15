@@ -10,6 +10,7 @@ export default async function TopBarbers() {
         image: b.imageUrl,
         description: b.role,
         coverImage: '/hero_bg.png', // Default cover
+        portfolioImages: b.portfolioImages || [],
         socials: b.socials || {
             whatsapp: '',
             tiktok: '',

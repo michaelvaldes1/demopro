@@ -22,8 +22,8 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
             // Call the logout API route
             await fetch('/api/auth/logout', { method: 'POST' });
 
-            // Redirect to login
-            router.push('/login');
+            // Redirect to auth
+            router.push('/auth');
             router.refresh();
         } catch (error) {
             console.error('Logout error:', error);

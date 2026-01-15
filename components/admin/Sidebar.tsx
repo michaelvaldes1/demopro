@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Settings, X, Scissors, LogOut, Home } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, X, Scissors, LogOut, Home, UserCog } from 'lucide-react';
 
 interface SidebarProps {
     isOpen?: boolean;
@@ -13,7 +13,7 @@ interface SidebarProps {
 const menuItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Usuarios', href: '/admin/users', icon: Users },
-    { name: 'Barberos', href: '/admin/barbers', icon: Scissors },
+    { name: 'Barberos', href: '/admin/barbers', icon: UserCog },
     { name: 'Servicios', href: '/admin/servicespage', icon: Scissors },
     { name: 'Configuración', href: '/admin/settings', icon: Settings },
 ];
@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/login';
+            window.location.href = '/auth';
         } catch (error) {
             console.error('Error logging out:', error);
         }

@@ -48,7 +48,7 @@ export default function ServicesClient({ children }: ServicesClientProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!isAddOpen) {
+        if (isAddOpen) {
             setNewName(""); setNewDescription(""); setNewPrice("");
             setNewDuration("45"); setNewCategory("Corte de Cabello");
             setNewImageUrl("");

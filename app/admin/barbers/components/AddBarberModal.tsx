@@ -1,48 +1,41 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { RefreshCw, Scissors, Instagram, Image as ImageIcon, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, Scissors, Instagram, Image as ImageIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { updateBarber } from '../../actions';
+import { addBarber } from '../../actions';
 
-interface EditBarberModalProps {
+interface AddBarberModalProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    barber: any;
-    onUpdate: () => Promise<void>;
+    onSuccess: () => void;
 }
 
-export default function EditBarberModal({
-    isOpen,
-    onOpenChange,
-    barber,
-    onUpdate
-}: EditBarberModalProps) {
-    const [name, setName] = useState("");
-    const [role, setRole] = useState("");
-    const [image, setImage] = useState("");
-    const [whatsapp, setWhatsapp] = useState("");
-    const [instagram, setInstagram] = useState("");
-    const [tiktok, setTiktok] = useState("");
+export default function AddBarberModal({ isOpen, onOpenChange, onSuccess }: AddBarberModalProps) {
+    const [newName, setNewName] = useState("");
+    const [newRole, setNewRole] = useState("");
+    const [newImage, setNewImage] = useState("");
+    const [newInstagram, setNewInstagram] = useState("");
+    const [newWhatsapp, setNewWhatsapp] = useState("");
+    const [newTiktok, setNewTiktok] = useState("");
     const [portfolioImages, setPortfolioImages] = useState<string[]>(Array(6).fill(""));
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const portfolioInputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
-    // Populate form when barber changes
+    // Reset form when modal closes
     useEffect(() => {
-        if (barber) {
-            setName(barber.name || "");
-            setRole(barber.role || "");
-            setImage(barber.imageUrl || "");
-            setWhatsapp(barber.socials?.whatsapp || "");
-            setInstagram(barber.socials?.instagram || "");
-            setTiktok(barber.socials?.tiktok || "");
-            const portfolio = barber.portfolioImages || [];
-            setPortfolioImages([...portfolio, ...Array(6 - portfolio.length).fill("")]);
+        if (!isOpen) {
+            setNewName("");
+            setNewRole("");
+            setNewImage("");
+            setNewInstagram("");
+            setNewWhatsapp("");
+            setNewTiktok("");
+            setPortfolioImages(Array(6).fill(""));
         }
-    }, [barber]);
+    }, [isOpen]);
 
     // Helper function to compress image to max 1MB
     const compressImage = (file: File): Promise<string> => {
@@ -96,7 +89,7 @@ export default function EditBarberModal({
         if (file) {
             try {
                 const compressedImage = await compressImage(file);
-                setImage(compressedImage);
+                setNewImage(compressedImage);
             } catch (error) {
                 console.error("Error compressing image:", error);
                 alert("Error al procesar la imagen. Por favor intenta de nuevo.");
@@ -119,32 +112,21 @@ export default function EditBarberModal({
         }
     };
 
-    const handleDeletePortfolioImage = (index: number, e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent triggering the file input
-        const newPortfolio = [...portfolioImages];
-        newPortfolio[index] = "";
-        setPortfolioImages(newPortfolio);
-    };
-
-    const handleUpdate = async () => {
-        if (!name || !role || !image || !barber) return;
-
+    const handleAddBarber = async () => {
+        if (!newName || !newRole || !newImage) return;
         setIsSubmitting(true);
         try {
-            await updateBarber(barber.id, {
-                name,
-                role,
-                imageUrl: image,
-                instagram: instagram || '',
-                whatsapp: whatsapp || '',
-                tiktok: tiktok || '',
+            await addBarber({
+                name: newName,
+                role: newRole,
+                imageUrl: newImage,
+                socials: { whatsapp: newWhatsapp || '', instagram: newInstagram || '', tiktok: newTiktok || '' },
                 portfolioImages: portfolioImages.filter(img => img !== "")
             });
-            await onUpdate();
+            onSuccess();
             onOpenChange(false);
         } catch (error) {
-            console.error("Error updating barber:", error);
-            alert("Error al actualizar el barbero. Por favor intenta de nuevo.");
+            console.error("Error adding barber:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -177,7 +159,7 @@ export default function EditBarberModal({
 
                         {/* Header */}
                         <div className="pt-8 px-8 pb-4">
-                            <h2 className="text-xl font-bold tracking-tight text-white">Editar Barbero</h2>
+                            <h2 className="text-xl font-bold tracking-tight text-white">Nuevo Barbero</h2>
                         </div>
 
                         {/* Body */}
@@ -185,9 +167,9 @@ export default function EditBarberModal({
                             {/* Photo Upload */}
                             <div className="flex justify-center py-4">
                                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                    <div className={`w-24 h-24 rounded-full overflow-hidden border-2 transition-all duration-300 ${image ? 'border-[#E5B454]' : 'border-dashed border-white/20 group-hover:border-white/40 bg-black/20'}`}>
-                                        {image ? (
-                                            <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                                    <div className={`w-24 h-24 rounded-full overflow-hidden border-2 transition-all duration-300 ${newImage ? 'border-[#E5B454]' : 'border-dashed border-white/20 group-hover:border-white/40 bg-black/20'}`}>
+                                        {newImage ? (
+                                            <img src={newImage} alt="Preview" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-1">
                                                 <Scissors size={20} />
@@ -196,7 +178,7 @@ export default function EditBarberModal({
                                         )}
                                     </div>
                                     <div className="absolute bottom-0 right-0 bg-[#E5B454] p-1.5 rounded-full text-black shadow-lg hover:scale-110 transition-transform border border-white/20">
-                                        <RefreshCw size={14} />
+                                        <Plus size={14} />
                                     </div>
                                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                                 </div>
@@ -207,8 +189,8 @@ export default function EditBarberModal({
                                 <div className="space-y-1.5">
                                     <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Nombre <span className="text-[#E5B454]">*</span></label>
                                     <input
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        value={newName}
+                                        onChange={(e) => setNewName(e.target.value)}
                                         placeholder="Ej. Pedro Gómez"
                                         className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner"
                                     />
@@ -216,8 +198,8 @@ export default function EditBarberModal({
                                 <div className="space-y-1.5">
                                     <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Rol <span className="text-[#E5B454]">*</span></label>
                                     <input
-                                        value={role}
-                                        onChange={(e) => setRole(e.target.value)}
+                                        value={newRole}
+                                        onChange={(e) => setNewRole(e.target.value)}
                                         placeholder="Ej. Senior Barber"
                                         className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm placeholder:text-white/20 focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner"
                                     />
@@ -233,8 +215,8 @@ export default function EditBarberModal({
                                             <Instagram size={14} />
                                         </div>
                                         <input
-                                            value={instagram}
-                                            onChange={(e) => setInstagram(e.target.value)}
+                                            value={newInstagram}
+                                            onChange={(e) => setNewInstagram(e.target.value)}
                                             placeholder="Instagram User"
                                             className="bg-transparent border-none outline-none text-xs text-white placeholder:text-white/20 w-full"
                                         />
@@ -248,8 +230,8 @@ export default function EditBarberModal({
                                             </svg>
                                         </div>
                                         <input
-                                            value={whatsapp}
-                                            onChange={(e) => setWhatsapp(e.target.value)}
+                                            value={newWhatsapp}
+                                            onChange={(e) => setNewWhatsapp(e.target.value)}
                                             placeholder="WhatsApp Link"
                                             className="bg-transparent border-none outline-none text-xs text-white placeholder:text-white/20 w-full"
                                         />
@@ -263,8 +245,8 @@ export default function EditBarberModal({
                                             </svg>
                                         </div>
                                         <input
-                                            value={tiktok}
-                                            onChange={(e) => setTiktok(e.target.value)}
+                                            value={newTiktok}
+                                            onChange={(e) => setNewTiktok(e.target.value)}
                                             placeholder="TikTok Link"
                                             className="bg-transparent border-none outline-none text-xs text-white placeholder:text-white/20 w-full"
                                         />
@@ -282,17 +264,7 @@ export default function EditBarberModal({
                                                 className="aspect-square relative rounded-xl overflow-hidden border border-white/10 hover:border-[#E5B454]/50 transition-all cursor-pointer group bg-white/5"
                                             >
                                                 {img ? (
-                                                    <>
-                                                        <img src={img} alt={`Portfolio ${index + 1}`} className="w-full h-full object-cover" />
-                                                        {/* Delete button */}
-                                                        <button
-                                                            onClick={(e) => handleDeletePortfolioImage(index, e)}
-                                                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                                            title="Eliminar imagen"
-                                                        >
-                                                            <X size={12} />
-                                                        </button>
-                                                    </>
+                                                    <img src={img} alt={`Portfolio ${index + 1}`} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex flex-col items-center justify-center text-white/20 group-hover:text-white/40 transition-colors">
                                                         <ImageIcon size={16} />
@@ -322,16 +294,16 @@ export default function EditBarberModal({
                                 Cancelar
                             </button>
                             <button
-                                onClick={handleUpdate}
-                                disabled={!name || !role || !image || isSubmitting}
+                                onClick={handleAddBarber}
+                                disabled={!newName || !newRole || !newImage || isSubmitting}
                                 className="flex-[1.5] h-12 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={(!name || !role || !image) ? { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)' } : {
+                                style={(!newName || !newRole || !newImage) ? { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)' } : {
                                     background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
                                     boxShadow: '0 10px 25px rgba(208, 158, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
                                     color: '#000'
                                 }}
                             >
-                                {isSubmitting ? 'Actualizando...' : 'Actualizar'}
+                                {isSubmitting ? 'Guardando...' : 'Guardar'}
                             </button>
                         </div>
                     </motion.div>

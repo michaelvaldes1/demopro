@@ -15,6 +15,7 @@ function getFirebaseAdmin() {
             const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
             return admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount),
+                storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.firebasestorage.app`,
             });
         }
 
@@ -32,12 +33,16 @@ function getFirebaseAdmin() {
         }
         privateKey = privateKey.replace(/\\n/g, '\n');
 
+        const projectId = process.env.FIREBASE_PROJECT_ID;
+
         return admin.initializeApp({
             credential: admin.credential.cert({
-                projectId: process.env.FIREBASE_PROJECT_ID,
+                projectId: projectId,
                 clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
                 privateKey: privateKey,
             }),
+            // Use the storage bucket from environment variables
+            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${projectId}.firebasestorage.app`,
         });
     } catch (error: any) {
         console.error('Firebase Admin initialization error:', error.message);
@@ -50,3 +55,5 @@ const app = getFirebaseAdmin();
 
 export const adminDb = admin.firestore(app!);
 export const adminAuth = admin.auth(app!);
+export const adminStorage = admin.storage(app!);
+

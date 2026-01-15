@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDashboardData } from '../actions';
+import { getDashboardData, getBarbers } from '../actions';
 import Timeline from './TimeLine';
 
 interface TimelineContainerProps {
@@ -8,7 +8,11 @@ interface TimelineContainerProps {
 }
 
 export default async function TimelineContainer({ date, barberId }: TimelineContainerProps) {
-    const data = await getDashboardData(date);
+    const [data, barbers] = await Promise.all([
+        getDashboardData(date),
+        getBarbers()
+    ]);
+
     const { appointments } = data;
 
     const filteredAppointments = barberId === 'all'
@@ -20,6 +24,7 @@ export default async function TimelineContainer({ date, barberId }: TimelineCont
             appointments={filteredAppointments}
             selectedDate={date}
             selectedBarberId={barberId}
+            barbers={barbers}
         />
     );
 }

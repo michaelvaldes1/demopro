@@ -1,6 +1,7 @@
 'use server';
 
 import { adminDb, adminAuth } from '@/lib/firebaseAdmin';
+import { uploadImageToStorage, deleteBarberImages } from '@/lib/storageHelpers';
 import { cookies } from 'next/headers';
 import { SERVICES } from '@/app/constants/constants';
 import { MOCK_BARBERS } from '@/app/constants/booking';
@@ -30,6 +31,37 @@ async function getAdminCheck() {
         throw new Error('Unauthorized');
     }
     return admin;
+}
+
+// Helper function to create audit logs
+async function createAuditLog({
+    adminEmail,
+    action,
+    resourceType,
+    resourceId,
+    resourceName,
+    metadata
+}: {
+    adminEmail: string;
+    action: 'create' | 'update' | 'delete' | 'status_change' | 'block';
+    resourceType: 'appointment' | 'service' | 'barber' | 'user';
+    resourceId: string;
+    resourceName: string;
+    metadata?: any;
+}) {
+    try {
+        await adminDb.collection('auditLogs').add({
+            adminEmail,
+            action,
+            resourceType,
+            resourceId,
+            resourceName,
+            metadata: metadata || {},
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error creating audit log:', error);
+    }
 }
 
 // Helper function to look up price
@@ -72,56 +104,170 @@ export const getBarbers = cache(async () => {
 });
 
 export async function addBarber(barberData: any) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
 
     if (!barberData.name || !barberData.role || !barberData.imageUrl) {
         throw new Error('Todos los campos obligatorios (nombre, rol, imagen) deben estar presentes.');
     }
 
+    // Create barber document first to get ID
     const docRef = await adminDb.collection('barbers').add({
-        ...barberData,
+        name: barberData.name,
+        role: barberData.role,
+        socials: barberData.socials || {},
         isAvailable: true,
         createdAt: new Date().toISOString()
     });
-    return { id: docRef.id, success: true };
+
+    try {
+        // Upload profile image to Storage
+        const profileImageUrl = await uploadImageToStorage(
+            barberData.imageUrl,
+            `barbers/${docRef.id}/profile.jpg`
+        );
+
+        // Upload portfolio images to Storage
+        const portfolioUrls: string[] = [];
+        if (barberData.portfolioImages && barberData.portfolioImages.length > 0) {
+            for (let i = 0; i < barberData.portfolioImages.length; i++) {
+                const imageUrl = await uploadImageToStorage(
+                    barberData.portfolioImages[i],
+                    `barbers/${docRef.id}/portfolio/${i}.jpg`
+                );
+                portfolioUrls.push(imageUrl);
+            }
+        }
+
+        // Update document with Storage URLs
+        await adminDb.collection('barbers').doc(docRef.id).update({
+            imageUrl: profileImageUrl,
+            portfolioImages: portfolioUrls
+        });
+
+        await createAuditLog({
+            adminEmail: admin.email || 'unknown',
+            action: 'create',
+            resourceType: 'barber',
+            resourceId: docRef.id,
+            resourceName: barberData.name,
+            metadata: { role: barberData.role }
+        });
+
+        return { id: docRef.id, success: true };
+    } catch (error) {
+        // If upload fails, delete the document
+        await adminDb.collection('barbers').doc(docRef.id).delete();
+        throw error;
+    }
 }
 
 export async function updateBarber(id: string, barberData: any) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
 
     if (!barberData.name || !barberData.role || !barberData.imageUrl) {
         throw new Error('Todos los campos obligatorios (nombre, rol, imagen) deben estar presentes.');
+    }
+
+    // Check if profile image is Base64 (new upload) or URL (existing)
+    let profileImageUrl = barberData.imageUrl;
+    if (barberData.imageUrl.startsWith('data:image')) {
+        // Delete old profile image and upload new one
+        profileImageUrl = await uploadImageToStorage(
+            barberData.imageUrl,
+            `barbers/${id}/profile.jpg`
+        );
+    }
+
+    // Handle portfolio images
+    const portfolioUrls: string[] = [];
+    if (barberData.portfolioImages && barberData.portfolioImages.length > 0) {
+        for (let i = 0; i < barberData.portfolioImages.length; i++) {
+            const img = barberData.portfolioImages[i];
+            if (img.startsWith('data:image')) {
+                // New image - upload to Storage
+                const imageUrl = await uploadImageToStorage(
+                    img,
+                    `barbers/${id}/portfolio/${i}.jpg`
+                );
+                portfolioUrls.push(imageUrl);
+            } else if (img.startsWith('http')) {
+                // Existing image - keep URL
+                portfolioUrls.push(img);
+            }
+        }
     }
 
     // Restructure to use socials object for consistency
     const updateData = {
         name: barberData.name,
         role: barberData.role,
-        imageUrl: barberData.imageUrl,
+        imageUrl: profileImageUrl,
         socials: {
             whatsapp: barberData.whatsapp || '',
             instagram: barberData.instagram || '',
             tiktok: barberData.tiktok || ''
         },
+        portfolioImages: portfolioUrls,
         updatedAt: new Date().toISOString()
     };
 
     await adminDb.collection('barbers').doc(id).update(updateData);
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'update',
+        resourceType: 'barber',
+        resourceId: id,
+        resourceName: barberData.name,
+        metadata: { role: barberData.role }
+    });
+
     return { success: true };
 }
 
 export async function deleteBarber(id: string) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
+
+    const barberDoc = await adminDb.collection('barbers').doc(id).get();
+    const barberName = barberDoc.exists ? barberDoc.data()?.name || 'Unknown' : 'Unknown';
+
+    // Delete barber document
     await adminDb.collection('barbers').doc(id).delete();
+
+    // Delete all images from Storage
+    await deleteBarberImages(id);
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'delete',
+        resourceType: 'barber',
+        resourceId: id,
+        resourceName: barberName
+    });
+
     return { success: true };
 }
 
 export async function toggleBarberStatus(id: string, currentStatus: boolean) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
+
+    const barberDoc = await adminDb.collection('barbers').doc(id).get();
+    const barberName = barberDoc.exists ? barberDoc.data()?.name || 'Unknown' : 'Unknown';
+
     await adminDb.collection('barbers').doc(id).update({
         isAvailable: !currentStatus,
         updatedAt: new Date().toISOString()
     });
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'status_change',
+        resourceType: 'barber',
+        resourceId: id,
+        resourceName: barberName,
+        metadata: { oldStatus: currentStatus, newStatus: !currentStatus }
+    });
+
     return { success: true };
 }
 
@@ -226,6 +372,7 @@ export async function updateAppointmentStatus(id: string, status: string) {
 
     if (!appointmentDoc.exists) throw new Error('Cita no encontrada');
     const appointmentData = appointmentDoc.data();
+    const oldStatus = appointmentData?.status;
 
     await appointmentRef.update({
         status,
@@ -252,6 +399,15 @@ export async function updateAppointmentStatus(id: string, status: string) {
         });
     }
 
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'status_change',
+        resourceType: 'appointment',
+        resourceId: id,
+        resourceName: `${appointmentData?.clientName || 'Cliente'} - ${appointmentData?.serviceName || 'Servicio'}`,
+        metadata: { oldStatus, newStatus: status, date: appointmentData?.date, time: appointmentData?.time }
+    });
+
     return { success: true };
 }
 
@@ -259,7 +415,20 @@ export async function deleteAppointment(id: string) {
     const admin = await getAdminUser();
     if (!admin) throw new Error('Unauthorized');
 
+    const appointmentDoc = await adminDb.collection('appointments').doc(id).get();
+    const appointmentData = appointmentDoc.data();
+
     await adminDb.collection('appointments').doc(id).delete();
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'delete',
+        resourceType: 'appointment',
+        resourceId: id,
+        resourceName: `${appointmentData?.clientName || 'Cliente'} - ${appointmentData?.serviceName || 'Servicio'}`,
+        metadata: { date: appointmentData?.date, time: appointmentData?.time, status: appointmentData?.status }
+    });
+
     return { success: true };
 }
 
@@ -283,11 +452,11 @@ export async function removeAdminRole(uid: string) {
     return { success: true };
 }
 
-export async function blockSlot(date: string, time: string, barberId: string = 'b1') {
+export async function blockSlot(date: string, time: string, barberId: string) {
     const admin = await getAdminUser();
     if (!admin) throw new Error('Unauthorized');
 
-    await adminDb.collection('appointments').add({
+    const docRef = await adminDb.collection('appointments').add({
         date,
         time,
         barberId,
@@ -296,6 +465,17 @@ export async function blockSlot(date: string, time: string, barberId: string = '
         serviceName: 'Bloqueado',
         clientName: 'Admin',
         createdAt: new Date().toISOString(),
+    });
+
+    const barberName = await getBarberName(barberId);
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'block',
+        resourceType: 'appointment',
+        resourceId: docRef.id,
+        resourceName: `Slot bloqueado - ${barberName}`,
+        metadata: { date, time, barberId }
     });
 
     return { success: true };
@@ -403,7 +583,7 @@ export async function getServices() {
 }
 
 export async function addService(serviceData: any) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
 
     if (!serviceData.name || !serviceData.price || !serviceData.duration || !serviceData.category) {
         throw new Error('Todos los campos obligatorios (nombre, precio, duración, categoría) deben estar presentes.');
@@ -414,11 +594,21 @@ export async function addService(serviceData: any) {
         imageUrl: serviceData.imageUrl || '',
         createdAt: new Date().toISOString()
     });
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'create',
+        resourceType: 'service',
+        resourceId: docRef.id,
+        resourceName: serviceData.name,
+        metadata: { price: serviceData.price, category: serviceData.category }
+    });
+
     return { id: docRef.id, success: true };
 }
 
 export async function updateService(id: string, serviceData: any) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
 
     if (!serviceData.name || !serviceData.price || !serviceData.duration || !serviceData.category) {
         throw new Error('Todos los campos obligatorios (nombre, precio, duración, categoría) deben estar presentes.');
@@ -429,12 +619,59 @@ export async function updateService(id: string, serviceData: any) {
         imageUrl: serviceData.imageUrl || '',
         updatedAt: new Date().toISOString()
     });
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'update',
+        resourceType: 'service',
+        resourceId: id,
+        resourceName: serviceData.name,
+        metadata: { price: serviceData.price, category: serviceData.category }
+    });
+
     return { success: true };
 }
 
 export async function deleteService(id: string) {
-    await getAdminCheck();
+    const admin = await getAdminCheck();
+
+    const serviceDoc = await adminDb.collection('services').doc(id).get();
+    const serviceName = serviceDoc.exists ? serviceDoc.data()?.name || 'Unknown' : 'Unknown';
+
     await adminDb.collection('services').doc(id).delete();
+
+    await createAuditLog({
+        adminEmail: admin.email || 'unknown',
+        action: 'delete',
+        resourceType: 'service',
+        resourceId: id,
+        resourceName: serviceName
+    });
+
     return { success: true };
 }
 
+// ============================================
+// AUDIT LOGS
+// ============================================
+
+export async function getAuditLogs(limit: number = 50) {
+    const admin = await getAdminUser();
+    if (!admin) throw new Error('Unauthorized');
+
+    try {
+        const snapshot = await adminDb
+            .collection('auditLogs')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+    } catch (error) {
+        console.error('Error fetching audit logs:', error);
+        return [];
+    }
+}
