@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/react";
+import { Avatar, Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Spinner, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, useDisclosure } from "@heroui/react";
 import { Search, MoreVertical, Shield, ShieldAlert, RefreshCw, User } from 'lucide-react';
 import { getAdminUsers, setUserAsAdmin, removeAdminRole } from '../actions';
+import UserDetailsModal from './components/UserDetailsModal';
 
 const columns = [
     { name: "USUARIO", uid: "user", sortable: true },
@@ -28,6 +29,8 @@ export default function UsersPage() {
     const [filterValue, setFilterValue] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [page, setPage] = useState(1);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     const rowsPerPage = 8;
 
@@ -103,6 +106,11 @@ export default function UsersPage() {
         }
     };
 
+    const handleViewProfile = (user: any) => {
+        setSelectedUser(user);
+        onOpen();
+    };
+
     const renderCell = React.useCallback((user: any, columnKey: React.Key) => {
         const cellValue = user[columnKey as keyof typeof user];
 
@@ -110,24 +118,23 @@ export default function UsersPage() {
             case "user":
                 return (
                     <div className="flex items-center gap-4">
-                        <div className="relative group">
-                            {user.avatar ? (
-                                <img
-                                    src={user.avatar}
-                                    alt={user.name}
-                                    className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full object-cover aspect-square border border-white/20 shadow-lg group-hover:scale-105 transition-transform duration-300"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                    }}
-                                />
-                            ) : null}
-                            <div className={`w-12 h-12 min-w-[48px] min-h-[48px] rounded-full aspect-square bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md shadow-inner ${user.avatar ? 'hidden' : ''}`}>
-                                <span className="text-[#E5B454] font-black text-lg">{user.name?.charAt(0)}</span>
-                            </div>
-
+                        <div className="relative group p-1 rounded-full border border-white/10 bg-gradient-to-br from-white/10 to-transparent shadow-xl">
+                            <Avatar
+                                src={user.avatar || user.photoURL || undefined}
+                                name={(user.name || user.displayName || "Usuario").split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                                className="w-12 h-12 text-medium"
+                                isBordered
+                                imgProps={{
+                                    referrerPolicy: "no-referrer",
+                                    className: "object-cover"
+                                }}
+                                classNames={{
+                                    base: "bg-zinc-900 ring-2 ring-[#E5B454]/30",
+                                    name: "text-[#E5B454] font-bold"
+                                }}
+                            />
                             {user.role === 'admin' && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#E5B454] rounded-full border-2 border-black shadow-[0_0_10px_rgba(229,180,84,0.6)] flex items-center justify-center">
+                                <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#E5B454] rounded-full border-2 border-black shadow-[0_0_10px_rgba(229,180,84,0.6)] flex items-center justify-center z-10">
                                     <Shield size={8} className="text-black" />
                                 </div>
                             )}
@@ -190,7 +197,14 @@ export default function UsersPage() {
                                 </button>
                             </DropdownTrigger>
                             <DropdownMenu aria-label="Acciones">
-                                <DropdownItem key="view" startContent={<Search size={14} />} className="text-white/80 data-[hover=true]:bg-white/10 rounded-xl">Ver Perfil</DropdownItem>
+                                <DropdownItem
+                                    key="view"
+                                    startContent={<Search size={14} />}
+                                    className="text-white/80 data-[hover=true]:bg-white/10 rounded-xl"
+                                    onPress={() => handleViewProfile(user)}
+                                >
+                                    Ver Perfil
+                                </DropdownItem>
                                 {user.role !== 'admin' ? (
                                     <DropdownItem
                                         key="make_admin"
@@ -327,7 +341,7 @@ export default function UsersPage() {
                                             <th
                                                 key={column.uid}
                                                 className={`text-white/40 font-black uppercase text-[10px] tracking-[0.2em] h-14 text-left first:pl-8 last:pr-8 ${column.uid === 'user' ? 'min-w-[250px]' : 'min-w-[120px]'
-                                                    } ${column.uid === "actions" ? 'text-right' : ''}`}
+                                                    } ${column.uid === "actions" ? 'text-right' : ''} ${column.uid !== 'user' ? 'pl-10' : ''}`}
                                             >
                                                 {column.name}
                                             </th>
@@ -359,7 +373,7 @@ export default function UsersPage() {
                                                     <td
                                                         key={column.uid}
                                                         className={`py-4 first:pl-8 last:pr-8 ${column.uid === "actions" ? 'text-right' : ''
-                                                            }`}
+                                                            } ${column.uid !== 'user' ? 'pl-10' : ''}`}
                                                     >
                                                         {renderCell(item, column.uid)}
                                                     </td>
@@ -401,8 +415,8 @@ export default function UsersPage() {
                                                                 key={pageNum}
                                                                 onClick={() => setPage(pageNum)}
                                                                 className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 ${page === pageNum
-                                                                        ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
-                                                                        : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
+                                                                    ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
+                                                                    : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
                                                                     }`}
                                                             >
                                                                 {pageNum}
@@ -426,8 +440,8 @@ export default function UsersPage() {
                                                         key={pageNum}
                                                         onClick={() => setPage(pageNum)}
                                                         className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 ${page === pageNum
-                                                                ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
-                                                                : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
+                                                            ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
+                                                            : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
                                                             }`}
                                                     >
                                                         {pageNum}
@@ -453,6 +467,12 @@ export default function UsersPage() {
                     )}
                 </div>
             </div>
+            {/* Modal de Detalles del Usuario */}
+            <UserDetailsModal
+                isOpen={isOpen}
+                onClose={onClose}
+                user={selectedUser}
+            />
         </div>
     );
 }

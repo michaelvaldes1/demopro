@@ -25,4 +25,6 @@ export interface ScheduleItem {
     barberId?: string;
     price?: number;
     isPast?: boolean;
+    clientEmail?: string;
+    clientAvatar?: string;
 }

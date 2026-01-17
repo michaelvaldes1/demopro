@@ -143,6 +143,10 @@ export default function BookingClient({
         setIsSaving(true);
         try {
             const token = await user.getIdToken();
+            const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const serviceNames = selectedServices.map(s => s.name).join(' + ');
+            const serviceIds = selectedServices.map(s => s.id).join(',');
+
             const response = await fetch('/api/citas', {
                 method: 'POST',
                 headers: {
@@ -151,14 +155,15 @@ export default function BookingClient({
                 },
                 body: JSON.stringify({
                     userId: user.uid,
-                    serviceId: selectedServices[0].id,
-                    serviceName: selectedServices[0].name,
+                    serviceId: serviceIds,
+                    serviceName: serviceNames,
                     date: selectedDate.fullDate,
                     time: selectedTime.time,
                     barberId: selectedBarberId,
                     barberName: selectedBarber.name,
                     clientName: user.displayName || "Invitado",
                     clientEmail: user.email || "invitado@miago.com",
+                    price: totalPrice,
                     status: 'confirmed'
                 })
             });
@@ -168,7 +173,7 @@ export default function BookingClient({
                 await createNotification({
                     userId: user.email!,
                     title: "Cita Confirmada",
-                    message: `Tu cita para ${selectedServices[0].name} el ${selectedDate.dayName} ${selectedDate.dateNumber} a las ${selectedTime.time} ha sido agendada con éxito.`,
+                    message: `Tu cita para ${serviceNames} el ${selectedDate.dayName} ${selectedDate.dateNumber} a las ${selectedTime.time} ha sido agendada con éxito.`,
                     isRead: false
                 });
 
@@ -251,7 +256,7 @@ export default function BookingClient({
                     isSaving={isSaving}
                     isSuccess={isBookingSuccess}
                     bookingData={{
-                        service: selectedServices[0],
+                        services: selectedServices,
                         barberName: selectedBarber.name,
                         date: `${selectedDate.dayName} ${selectedDate.dateNumber} de ${format(parseISO(selectedDate.fullDate), 'MMMM', { locale: es })}`,
                         time: selectedTime.time,

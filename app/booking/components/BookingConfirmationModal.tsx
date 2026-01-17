@@ -2,16 +2,15 @@
 
 import React from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spinner } from "@heroui/react";
-import { CheckCircle2, Calendar, Clock, User, Scissors, X } from "lucide-react";
+import { CheckCircle2, Calendar, Clock, User, Scissors, Mail } from "lucide-react";
 import { Service } from './types';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface BookingConfirmationModalProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     onConfirm: () => Promise<void>;
     bookingData: {
-        service: Service;
+        services: Service[];
         barberName: string;
         date: string;
         time: string;
@@ -35,72 +34,113 @@ export default function BookingConfirmationModal({
             isOpen={isOpen}
             onOpenChange={onOpenChange}
             backdrop="blur"
-            placement="top"
+            placement="center"
             hideCloseButton
             classNames={{
-                base: "bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden p-0 mt-20",
-                backdrop: "backdrop-blur-xl bg-black/40",
+                // Base del modal estilo iOS 26: Bordes muy redondeados, fondo oscuro translúcido, sombra profunda
+                base: "max-w-[400px] w-[90%] mx-auto bg-[#09090b]/80 backdrop-blur-[50px] border border-white/10 rounded-[2.5rem] shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)]",
+                backdrop: "bg-black/60 backdrop-blur-md",
+                wrapper: "z-[200]"
             }}
         >
-            <ModalContent>
+            <ModalContent className="p-0 overflow-hidden">
                 {(onClose) => (
-                    <div className="relative">
-                        {/* Glass Refraction Header */}
-                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent z-10" />
+                    <div className="relative flex flex-col w-full h-full">
 
-                        <ModalHeader className="flex flex-col gap-2 items-center justify-center pt-10 pb-6 border-b border-white/5 bg-white/[0.02]">
-                            <div className="w-16 h-16 rounded-full bg-[#D09E1E]/20 flex items-center justify-center mb-2 border border-[#D09E1E]/30">
-                                <Scissors className="text-[#D09E1E]" size={32} />
+                        {/* 1. Refraction Line (Luz superior) */}
+                        <div className="absolute top-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent z-20 pointer-events-none" />
+
+                        {/* Header */}
+                        <ModalHeader className="flex flex-col gap-4 items-center justify-center pt-10 pb-2 bg-transparent">
+                            {/* Icono Flotante con Glow */}
+                            <div className="relative group">
+                                <div className="absolute -inset-4 bg-[#E5B454]/20 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+                                <div className="relative w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center border border-white/10 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
+                                    <Scissors className="text-[#E5B454] drop-shadow-[0_2px_10px_rgba(229,180,84,0.5)]" size={32} />
+                                </div>
                             </div>
-                            <div className="text-center">
-                                <h2 className="text-xl font-black text-white uppercase tracking-tight">Confirmar Cita</h2>
-                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Revisa los detalles antes de agendar</p>
+                            <div className="text-center space-y-1 z-10">
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Confirmar</h2>
+                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em]">Resumen de tu cita</p>
                             </div>
                         </ModalHeader>
 
-                        <ModalBody className="p-8 gap-6">
-                            <div className="space-y-4">
-                                <InfoRow
-                                    icon={<Scissors size={18} />}
-                                    label="Servicio"
-                                    value={bookingData.service.name}
-                                    subValue={`${bookingData.service.duration} min • $${bookingData.service.price}`}
-                                />
-                                <InfoRow
-                                    icon={<User size={18} />}
+                        {/* Body - Scrollable */}
+                        <ModalBody className="px-6 py-4 gap-4 overflow-y-auto custom-scrollbar">
+
+                            {/* Tarjetas de Servicios Seleccionados */}
+                            <div className="space-y-3">
+                                <span className="text-[9px] font-black text-[#E5B454] uppercase tracking-[0.2em] ml-2">Servicios Seleccionados</span>
+                                {bookingData.services.map((service, idx) => (
+                                    <div key={idx} className="p-4 rounded-[1.5rem] bg-white/5 border border-white/5 flex flex-col gap-1 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#E5B454]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                        <h3 className="text-sm font-bold text-white leading-tight">{service.name}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-white/60 text-[11px] font-bold font-mono">
+                                                ${service.price}
+                                            </span>
+                                            <span className="text-white/30 text-[11px] font-bold flex items-center gap-1">
+                                                <Clock size={10} /> {service.duration} min
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Total (si hay más de uno) */}
+                            {bookingData.services.length > 1 && (
+                                <div className="px-6 py-3 rounded-2xl bg-[#E5B454]/10 border border-[#E5B454]/20 flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-[#E5B454] uppercase tracking-widest">Total Estimado</span>
+                                    <span className="text-lg font-black text-white">
+                                        ${bookingData.services.reduce((sum, s) => sum + s.price, 0)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Grid de Detalles (Barbero, Fecha, Hora) */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <InfoTile
+                                    icon={<User size={16} />}
                                     label="Barbero"
                                     value={bookingData.barberName}
                                 />
-                                <InfoRow
-                                    icon={<Calendar size={18} />}
+                                <InfoTile
+                                    icon={<Calendar size={16} />}
                                     label="Fecha"
                                     value={bookingData.date}
                                 />
-                                <InfoRow
-                                    icon={<Clock size={18} />}
+                                <InfoTile
+                                    icon={<Clock size={16} />}
                                     label="Hora"
                                     value={bookingData.time}
+                                    className="col-span-2 flex-row items-center gap-4 px-5"
                                 />
                             </div>
 
-                            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
-                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Información del Cliente</p>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-white">{bookingData.clientName}</span>
-                                    <span className="text-xs text-zinc-400">{bookingData.clientEmail}</span>
+                            {/* Info Cliente */}
+                            <div className="p-4 rounded-[1.5rem] bg-black/20 border border-white/5 flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/40">
+                                    <Mail size={16} />
+                                </div>
+                                <div className="flex flex-col overflow-hidden">
+                                    <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Cliente</span>
+                                    <span className="text-sm font-bold text-white truncate">{bookingData.clientName}</span>
+                                    <span className="text-xs text-white/50 truncate">{bookingData.clientEmail}</span>
                                 </div>
                             </div>
+
                         </ModalBody>
 
-                        <ModalFooter className="p-8 pt-0 flex flex-col gap-3">
+                        {/* Footer */}
+                        <ModalFooter className="p-6 pt-2 flex flex-col gap-3 bg-transparent">
                             {isSuccess ? (
-                                <div className="w-full flex flex-col items-center gap-4 py-4">
-                                    <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
-                                        <CheckCircle2 className="text-green-500" size={32} />
+                                <div className="w-full flex flex-col items-center gap-6 py-4 animate-in fade-in zoom-in duration-300">
+                                    <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20 shadow-[0_0_40px_-10px_rgba(34,197,94,0.4)]">
+                                        <CheckCircle2 className="text-green-400" size={40} />
                                     </div>
-                                    <p className="text-green-500 font-bold uppercase tracking-widest text-xs">¡Cita agendada con éxito!</p>
+                                    <p className="text-green-400 font-bold uppercase tracking-widest text-xs">¡Agendado con éxito!</p>
                                     <Button
-                                        className="w-full h-12 bg-white/10 text-white font-bold uppercase tracking-widest text-xs"
+                                        className="w-full h-14 rounded-[1.5rem] bg-white/5 text-white font-bold uppercase tracking-widest text-xs hover:bg-white/10 border border-white/5 transition-all"
                                         onPress={() => onOpenChange(false)}
                                     >
                                         Cerrar
@@ -108,33 +148,40 @@ export default function BookingConfirmationModal({
                                 </div>
                             ) : (
                                 <>
-                                    {!bookingData.clientEmail || bookingData.clientEmail === "N/A" ? (
-                                        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 mb-2">
-                                            <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest text-center">Debes iniciar sesión para agendar</p>
+                                    {(!bookingData.clientEmail || bookingData.clientEmail === "N/A") && (
+                                        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex justify-center mb-2">
+                                            <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest">Inicia sesión para agendar</p>
                                         </div>
-                                    ) : null}
-                                    <Button
-                                        className="w-full h-14 bg-[#D09E1E] text-black font-black uppercase tracking-tight text-lg shadow-[0_20px_40px_rgba(208,158,30,0.2)] active:scale-95 transition-all"
-                                        onPress={onConfirm}
-                                        isDisabled={isSaving || !bookingData.clientEmail || bookingData.clientEmail === "N/A"}
-                                    >
-                                        {isSaving ? (
-                                            <div className="flex items-center gap-3">
-                                                <Spinner size="sm" color="current" />
-                                                <span>Procesando...</span>
-                                            </div>
-                                        ) : (
-                                            "Confirmar y Agendar"
-                                        )}
-                                    </Button>
-                                    <Button
-                                        variant="light"
-                                        className="w-full text-zinc-500 font-bold uppercase tracking-widest text-xs h-10"
-                                        onPress={() => onOpenChange(false)}
-                                        isDisabled={isSaving}
-                                    >
-                                        Cancelar
-                                    </Button>
+                                    )}
+
+                                    <div className="flex gap-3 w-full">
+                                        <Button
+                                            variant="flat"
+                                            className="flex-1 h-14 rounded-[1.5rem] bg-white/5 text-white/40 hover:text-white hover:bg-white/10 font-bold uppercase tracking-wider text-[10px] transition-colors"
+                                            onPress={() => onOpenChange(false)}
+                                            isDisabled={isSaving}
+                                        >
+                                            Cancelar
+                                        </Button>
+
+                                        <Button
+                                            className="flex-[2] h-14 rounded-[1.5rem] font-black text-black uppercase tracking-tight text-sm shadow-[0_10px_30px_-5px_rgba(208,158,30,0.4)] hover:shadow-[0_15px_40px_-5px_rgba(208,158,30,0.5)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none disabled:transform-none"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                            }}
+                                            onPress={onConfirm}
+                                            isDisabled={isSaving || !bookingData.clientEmail || bookingData.clientEmail === "N/A"}
+                                        >
+                                            {isSaving ? (
+                                                <div className="flex items-center gap-3">
+                                                    <Spinner size="sm" color="current" />
+                                                    <span>Procesando</span>
+                                                </div>
+                                            ) : (
+                                                "Confirmar Cita"
+                                            )}
+                                        </Button>
+                                    </div>
                                 </>
                             )}
                         </ModalFooter>
@@ -145,15 +192,15 @@ export default function BookingConfirmationModal({
     );
 }
 
-const InfoRow = ({ icon, label, value, subValue }: { icon: React.ReactNode, label: string, value: string, subValue?: string }) => (
-    <div className="flex items-start gap-4">
-        <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 text-[#D09E1E]">
+// Sub-componente para las "burbujas" de información
+const InfoTile = ({ icon, label, value, className = "" }: { icon: React.ReactNode, label: string, value: string, className?: string }) => (
+    <div className={`p-4 rounded-[1.5rem] bg-white/[0.03] border border-white/5 flex flex-col justify-center items-start gap-2 hover:bg-white/[0.06] transition-colors ${className}`}>
+        <div className="text-[#E5B454] opacity-80">
             {icon}
         </div>
-        <div className="flex flex-col">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-0.5">{label}</span>
-            <span className="text-md font-black text-white leading-tight uppercase tracking-tight">{value}</span>
-            {subValue && <span className="text-[11px] text-zinc-400 font-medium mt-0.5">{subValue}</span>}
+        <div>
+            <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest">{label}</p>
+            <p className="text-sm font-bold text-white leading-tight mt-0.5">{value}</p>
         </div>
     </div>
 );

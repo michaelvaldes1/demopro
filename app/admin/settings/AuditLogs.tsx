@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { FileText, Trash2, Edit, CheckCircle, Lock, User, Scissors, Calendar, Activity } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getAuditLogs } from '../actions';
+import { Spinner } from '@heroui/react';
 
 interface AuditLog {
     id: string;
@@ -36,12 +38,36 @@ const resourceConfig = {
 };
 
 export default function AuditLogs({ initialLogs }: AuditLogsProps) {
-    const [logs] = useState<AuditLog[]>(initialLogs as AuditLog[]);
+    const [logs, setLogs] = useState<AuditLog[]>(initialLogs as AuditLog[]);
     const [filter, setFilter] = useState<string>('all');
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(initialLogs.length === 20);
 
     const filteredLogs = filter === 'all'
         ? logs
         : logs.filter(log => log.resourceType === filter);
+
+    const handleLoadMore = async () => {
+        if (loading || !hasMore) return;
+        setLoading(true);
+
+        try {
+            const lastLog = logs[logs.length - 1];
+            const moreLogs = await getAuditLogs(20, lastLog.timestamp);
+
+            if (moreLogs.length < 20) {
+                setHasMore(false);
+            }
+
+            if (moreLogs.length > 0) {
+                setLogs((prev: AuditLog[]) => [...prev, ...moreLogs as AuditLog[]]);
+            }
+        } catch (error) {
+            console.error("Error loading more logs:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getActionDescription = (log: AuditLog) => {
         const action = actionConfig[log.action];
@@ -87,8 +113,8 @@ export default function AuditLogs({ initialLogs }: AuditLogsProps) {
                         <button
                             onClick={() => setFilter('all')}
                             className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${filter === 'all'
-                                    ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-lg scale-105'
-                                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                                ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-lg scale-105'
+                                : 'text-white/40 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             Todos
@@ -98,8 +124,8 @@ export default function AuditLogs({ initialLogs }: AuditLogsProps) {
                                 key={key}
                                 onClick={() => setFilter(key)}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 duration-300 ${filter === key
-                                        ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-lg scale-105 ml-2'
-                                        : 'text-white/40 hover:text-white hover:bg-white/5'
+                                    ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-lg scale-105 ml-2'
+                                    : 'text-white/40 hover:text-white hover:bg-white/5'
                                     }`}
                             >
                                 <config.icon size={12} />
@@ -121,9 +147,9 @@ export default function AuditLogs({ initialLogs }: AuditLogsProps) {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {filteredLogs.map((log) => {
-                            const action = actionConfig[log.action];
-                            const resource = resourceConfig[log.resourceType];
+                        {filteredLogs.map((log: AuditLog) => {
+                            const action = actionConfig[log.action as keyof typeof actionConfig];
+                            const resource = resourceConfig[log.resourceType as keyof typeof resourceConfig];
                             const ActionIcon = action.icon;
 
                             return (
@@ -180,6 +206,25 @@ export default function AuditLogs({ initialLogs }: AuditLogsProps) {
                                 </div>
                             );
                         })}
+                    </div>
+                )}
+
+                {hasMore && (
+                    <div className="mt-6 flex justify-center pb-4">
+                        <button
+                            onClick={handleLoadMore}
+                            disabled={loading}
+                            className={`px-8 py-3 rounded-2xl bg-white/5 border border-white/10 text-white/60 text-xs font-black uppercase tracking-[0.2em] transition-all hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center gap-3 shadow-lg`}
+                        >
+                            {loading ? (
+                                <>
+                                    <Spinner size="sm" color="warning" />
+                                    Cargando...
+                                </>
+                            ) : (
+                                'Ver más registros'
+                            )}
+                        </button>
                     </div>
                 )}
             </div>

@@ -10,7 +10,7 @@ export interface AppointmentData {
     barberName: string;
     clientName: string;
     clientEmail: string;
-    status: 'confirmed' | 'cancelled' | 'rejected';
+    status: 'confirmed' | 'cancelled' | 'rejected' | 'completed' | 'blocked';
 }
 
 export const saveAppointment = async (data: AppointmentData) => {
@@ -46,14 +46,13 @@ export const getUserAppointments = async (email: string) => {
     try {
         const q = query(
             collection(db, "appointments"),
-            where("clientEmail", "==", email),
-            where("status", "==", "confirmed")
+            where("clientEmail", "==", email.toLowerCase())
         );
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-        })) as (AppointmentData & { id: string })[];
+        })) as (AppointmentData & { id: string, status: string })[];
     } catch (error) {
         console.error("Error fetching user appointments:", error);
         return [];

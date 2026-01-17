@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Search, Plus, Trash2, MoreVertical, Scissors, RefreshCw, Instagram } from 'lucide-react';
+import { Avatar } from '@heroui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { deleteBarber, getBarbers, toggleBarberStatus } from '../../actions';
 import EditBarberModal from './EditBarberModal';
@@ -99,18 +100,21 @@ export default function BarbersClient({ initialBarbers }: { initialBarbers: any[
             case "name":
                 return (
                     <div className="flex items-center gap-4 py-1">
-                        <div className="relative group flex-shrink-0">
-                            {barber.imageUrl ? (
-                                <img
-                                    src={barber.imageUrl}
-                                    alt={barber.name}
-                                    className="w-12 h-12 rounded-full object-cover border border-white/20 shadow-md group-hover:scale-105 transition-transform duration-300"
-                                />
-                            ) : (
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md">
-                                    <span className="text-[#E5B454] font-black text-sm">{barber.name.charAt(0).toUpperCase()}</span>
-                                </div>
-                            )}
+                        <div className="relative group flex-shrink-0 p-0.5 rounded-full border border-white/10 bg-white/5">
+                            <Avatar
+                                src={barber.imageUrl || undefined}
+                                name={barber.name?.split(' ').map((n: string) => n[0]).join('') || "B"}
+                                className="w-12 h-12"
+                                isBordered
+                                imgProps={{
+                                    referrerPolicy: "no-referrer",
+                                    className: "object-cover"
+                                }}
+                                classNames={{
+                                    base: "bg-zinc-900 ring-2 ring-[#E5B454]/30",
+                                    name: "text-[#E5B454] font-bold"
+                                }}
+                            />
                         </div>
                         <span className="text-white font-bold text-sm tracking-tight">{barber.name}</span>
                     </div>

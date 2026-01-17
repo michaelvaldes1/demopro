@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/admin/Sidebar';
 import Header from '@/components/admin/Header';
+import Footer from '@/components/shared/Footer';
 
 interface AdminLayoutClientProps {
     children: React.ReactNode;
@@ -33,7 +34,7 @@ export default function AdminLayoutClient({ children, user }: AdminLayoutClientP
     }, [isSidebarOpen]);
 
     return (
-        <div className="min-h-screen bg-zinc-950 font-sans">
+        <div className="min-h-screen bg-zinc-950 font-sans flex flex-col">
             {/* Sidebar with toggle state */}
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
@@ -46,7 +47,7 @@ export default function AdminLayoutClient({ children, user }: AdminLayoutClientP
             )}
 
             {/* Main content area */}
-            <div className={`flex flex-col min-h-screen transition-all duration-300 ${isSidebarOpen ? 'lg:pl-64' : 'lg:pl-64'}`}>
+            <div className={`flex flex-col flex-1 transition-all duration-300 ${isSidebarOpen ? 'lg:pl-64' : 'lg:pl-64'}`}>
                 <Header
                     user={user}
                     onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -58,11 +59,7 @@ export default function AdminLayoutClient({ children, user }: AdminLayoutClientP
                     </div>
                 </main>
 
-                <footer className="py-6 px-4 md:px-8 border-t border-zinc-900 text-center">
-                    <p className="text-zinc-600 text-[10px] md:text-xs">
-                        &copy; {new Date().getFullYear()} MiagoBarber Admin Panel. Todos los derechos reservados.
-                    </p>
-                </footer>
+                <Footer minimal={true} />
             </div>
         </div>
     );

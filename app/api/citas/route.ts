@@ -14,9 +14,13 @@ export async function POST(request: Request) {
         const idToken = authHeader.split('Bearer ')[1];
         const decodedToken = await adminAuth.verifyIdToken(idToken);
 
-        // Validate that the userId in data matches the token or user is admin
-        if (body.userId !== decodedToken.uid && decodedToken.role !== 'admin') {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        // Security: Ensure the user can only create appointments for themselves
+        // Validate that the userId and clientEmail in data match the token or user is admin
+        if (decodedToken.role !== 'admin') {
+            const isOwner = body.userId === decodedToken.uid && body.clientEmail === decodedToken.email;
+            if (!isOwner) {
+                return NextResponse.json({ error: 'Forbidden: You cannot impersonate another user' }, { status: 403 });
+            }
         }
 
         // Proxy the write to Firestore
@@ -25,6 +29,16 @@ export async function POST(request: Request) {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         });
+
+        // Optimization: Track the user in a dedicated collection for faster stats
+        // Standardize: Use lowercase email as the unique document ID
+        const userEmail = (body.clientEmail || decodedToken.email).toLowerCase();
+        await adminDb.collection('users').doc(userEmail).set({
+            email: userEmail,
+            name: body.clientName || decodedToken.name || 'Cliente',
+            avatar: decodedToken.picture || null, // Capture Google profile picture
+            updatedAt: new Date().toISOString(),
+        }, { merge: true });
 
         return NextResponse.json({ id: docRef.id }, { status: 201 });
     } catch (error: any) {

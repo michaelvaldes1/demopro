@@ -58,8 +58,8 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                 hideCloseButton
                 classNames={{
                     base: "!rounded-[2.5rem] !overflow-hidden bg-transparent shadow-none max-w-[500px] w-full mx-4",
-                    wrapper: "z-[50]",
-                    backdrop: "backdrop-blur-xl bg-black/40",
+                    wrapper: "z-[9999]",
+                    backdrop: "backdrop-blur-2xl bg-black/50",
                 }}
             >
                 <ModalContent className="bg-transparent shadow-none p-0">
@@ -80,7 +80,7 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                             </button>
 
                             {/* Scrollable Content Area */}
-                            <div className="overflow-y-auto custom-scrollbar flex-1 pb-4">
+                            <div className="overflow-y-auto flex-1 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {/* Cover Image Container */}
                                 <div className="relative w-full h-56">
                                     <Image

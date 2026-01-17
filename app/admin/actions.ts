@@ -1,6 +1,7 @@
 'use server';
 
 import { adminDb, adminAuth } from '@/lib/firebaseAdmin';
+import * as admin from 'firebase-admin';
 import { uploadImageToStorage, deleteBarberImages } from '@/lib/storageHelpers';
 import { cookies } from 'next/headers';
 import { SERVICES } from '@/app/constants/constants';
@@ -84,6 +85,61 @@ const getBarberName = async (id: string): Promise<string> => {
         return 'Sin asignar';
     }
 };
+
+async function updateUserStats(userId: string | undefined, userEmail: string | undefined, userName: string | undefined, date: string) {
+    if (!userEmail) return;
+
+    try {
+        // Standardize: Use lowercase email as the unique document ID
+        const docId = userEmail.toLowerCase();
+        const userRef = adminDb.collection('users').doc(docId);
+
+        await userRef.set({
+            email: userEmail.toLowerCase(),
+            name: userName || 'Cliente',
+            visitCount: admin.firestore.FieldValue.increment(1),
+            lastVisit: date,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+    } catch (error) {
+        console.error('Error updating user stats:', error);
+    }
+}
+
+async function processAutoCompletions() {
+    try {
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        // Find confirmed appointments that are past due
+        // For simplicity, we auto-complete anything from yesterday or older
+        // Today's appointments will be auto-completed tomorrow or can be manually done
+        const snapshot = await adminDb.collection('appointments')
+            .where('status', '==', 'confirmed')
+            .where('date', '<', todayStr)
+            .limit(50) // Process in reasonable batches to avoid blocking the UI
+            .get();
+
+        if (snapshot.empty) return;
+
+        const batch = adminDb.batch();
+
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            batch.update(doc.ref, {
+                status: 'completed',
+                updatedAt: new Date().toISOString(),
+                autoCompleted: true
+            });
+
+            // Update user stats for each auto-completed appointment
+            await updateUserStats(data.userId, data.clientEmail, data.clientName, data.date);
+        }
+
+        await batch.commit();
+        console.log(`Auto-completed ${snapshot.size} appointments.`);
+    } catch (error) {
+        console.error('Error in processAutoCompletions:', error);
+    }
+}
 
 export const getBarbers = cache(async () => {
     try {
@@ -272,29 +328,74 @@ export async function toggleBarberStatus(id: string, currentStatus: boolean) {
 }
 
 export const getDashboardData = cache(async (date: string) => {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    const adminUser = await getAdminCheck();
+
+    // Auto-complete past appointments
+    await processAutoCompletions();
 
     try {
         const currentDate = date;
         const prevDate = format(subDays(parseISO(date), 1), 'yyyy-MM-dd');
 
-        const [currentSnapshot, prevSnapshot] = await Promise.all([
+        const [currentSnapshot, prevSnapshot, servicesSnapshot] = await Promise.all([
             adminDb.collection('appointments').where('date', '==', currentDate).get(),
-            adminDb.collection('appointments').where('date', '==', prevDate).get()
+            adminDb.collection('appointments').where('date', '==', prevDate).get(),
+            adminDb.collection('services').get()
         ]);
+
+        const dbServices = servicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+
+        const getRealtimeServicePrice = (id: string): number => {
+            const service = dbServices.find(s => s.id === id);
+            if (service) return Number(service.price);
+
+            // Fallback to static constants for legacy
+            const staticService = SERVICES.find(s => s.id === id);
+            return staticService ? staticService.price : 0;
+        };
 
         const mapAppointments = (snapshot: any) => snapshot.docs.map((doc: any) => {
             const data = doc.data();
             return {
                 id: doc.id,
                 ...data,
-                price: getServicePrice(data.serviceId)
+                price: data.price !== undefined ? Number(data.price) : getRealtimeServicePrice(data.serviceId)
             };
         });
 
         const currentApts = mapAppointments(currentSnapshot);
         const prevApts = mapAppointments(prevSnapshot);
+
+        // Enrich current appointments with user info (avatar, email)
+        const userEmails = Array.from(new Set(currentApts.map((a: any) => a.clientEmail).filter(Boolean)));
+        let userMap: Record<string, any> = {};
+
+        if (userEmails.length > 0) {
+            const usersSnapshot = await adminDb.collection('users')
+                .where('email', 'in', userEmails)
+                .get();
+
+            usersSnapshot.docs.forEach(doc => {
+                const userData = doc.data();
+                userMap[userData.email.toLowerCase()] = {
+                    avatar: userData.avatar,
+                    email: userData.email
+                };
+            });
+        }
+
+        const enrichedCurrentApts = currentApts.map((apt: any) => {
+            const userData = userMap[apt.clientEmail?.toLowerCase()];
+            const clientName = apt.clientName || 'Cliente';
+            // Use stored avatar, or fallback to UI-avatars if missing
+            const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=random&color=fff`;
+
+            return {
+                ...apt,
+                clientAvatar: userData?.avatar || fallbackAvatar,
+                clientEmail: apt.clientEmail || userData?.email || 'N/A'
+            };
+        });
 
         const calculateStats = (apts: any[]) => {
             const active = apts.filter(a => a.status !== 'blocked');
@@ -309,7 +410,7 @@ export const getDashboardData = cache(async (date: string) => {
         const prevStats = calculateStats(prevApts);
 
         // Process barber names in parallel
-        const appointments = await Promise.all(currentApts.map(async (apt: any) => {
+        const appointments = await Promise.all(enrichedCurrentApts.map(async (apt: any) => {
             const currentBarberName = await getBarberName(apt.barberId);
             const finalBarberName = (currentBarberName !== 'Sin asignar')
                 ? currentBarberName
@@ -319,6 +420,8 @@ export const getDashboardData = cache(async (date: string) => {
                 id: apt.id,
                 time: apt.time,
                 clientName: apt.clientName || 'Cliente',
+                clientEmail: apt.clientEmail,
+                clientAvatar: apt.clientAvatar,
                 service: apt.serviceName || apt.service || 'Servicio',
                 duration: apt.duration || '45 min',
                 status: apt.status,
@@ -353,8 +456,7 @@ export const getDashboardData = cache(async (date: string) => {
 });
 
 export async function getAllAppointments() {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    await getAdminCheck();
 
     const snapshot = await adminDb.collection('appointments').orderBy('date', 'desc').get();
     return snapshot.docs.map(doc => ({
@@ -364,8 +466,8 @@ export async function getAllAppointments() {
 }
 
 export async function updateAppointmentStatus(id: string, status: string) {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    const admin = await getAdminCheck();
+
 
     const appointmentRef = adminDb.collection('appointments').doc(id);
     const appointmentDoc = await appointmentRef.get();
@@ -378,6 +480,16 @@ export async function updateAppointmentStatus(id: string, status: string) {
         status,
         updatedAt: new Date().toISOString(),
     });
+
+    // If marked as completed, update user stats
+    if (status === 'completed') {
+        await updateUserStats(
+            appointmentData?.userId,
+            appointmentData?.clientEmail,
+            appointmentData?.clientName,
+            appointmentData?.date
+        );
+    }
 
     if (appointmentData?.clientEmail) {
         const statusMessages: { [key: string]: string } = {
@@ -412,8 +524,7 @@ export async function updateAppointmentStatus(id: string, status: string) {
 }
 
 export async function deleteAppointment(id: string) {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    const admin = await getAdminCheck();
 
     const appointmentDoc = await adminDb.collection('appointments').doc(id).get();
     const appointmentData = appointmentDoc.data();
@@ -433,28 +544,45 @@ export async function deleteAppointment(id: string) {
 }
 
 export async function setUserAsAdmin(uid: string) {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    await getAdminCheck();
 
     await adminAuth.setCustomUserClaims(uid, { role: 'admin' });
+
+    // Sync with users collection (using email as ID)
+    const user = await adminAuth.getUser(uid);
+    if (user.email) {
+        await adminDb.collection('users').doc(user.email.toLowerCase()).set({
+            role: 'admin',
+            avatar: user.photoURL || null,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+    }
     return { success: true };
 }
 
 export async function removeAdminRole(uid: string) {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    const admin = await getAdminCheck();
 
     if (admin.uid === uid) {
         throw new Error('No puedes quitarte el rol de administrador a ti mismo.');
     }
 
     await adminAuth.setCustomUserClaims(uid, { role: 'user' });
+
+    // Sync with users collection (using email as ID)
+    const user = await adminAuth.getUser(uid);
+    if (user.email) {
+        await adminDb.collection('users').doc(user.email.toLowerCase()).set({
+            role: 'user',
+            avatar: user.photoURL || null,
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+    }
     return { success: true };
 }
 
 export async function blockSlot(date: string, time: string, barberId: string) {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    const admin = await getAdminCheck();
 
     const docRef = await adminDb.collection('appointments').add({
         date,
@@ -482,37 +610,63 @@ export async function blockSlot(date: string, time: string, barberId: string) {
 }
 
 export async function getAdminUsers() {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+    await getAdminCheck();
 
     try {
-        const listUsersResult = await adminAuth.listUsers(1000);
-        const authUsers = listUsersResult.users;
+        const usersSnapshot = await adminDb.collection('users').get();
+        const rawUsersData = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
-        const appointmentsSnapshot = await adminDb.collection('appointments')
-            .orderBy('date', 'desc')
-            .get();
+        // Fetch all users from Firebase Auth to get the most up-to-date profile pictures
+        const authUsersResult = await adminAuth.listUsers();
+        const authUsers = authUsersResult.users;
 
-        const allAppointments = appointmentsSnapshot.docs.map(doc => doc.data());
-        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        // Deduplication Logic: Group by email to merge legacy UID-based docs and new Email-based docs
+        const mergedUsers = new Map<string, any>();
+
+        // 1. First, populate with Auth data
+        authUsers.forEach(authUser => {
+            const email = authUser.email?.toLowerCase();
+            if (!email) return;
+
+            mergedUsers.set(email, {
+                id: authUser.uid,
+                email: email,
+                name: authUser.displayName || 'Cliente',
+                avatar: authUser.photoURL || null,
+                role: (authUser.customClaims?.role as string) || 'user',
+                visitCount: 0,
+                lastVisit: null
+            });
+        });
+
+        // 2. Then, merge/update with Firestore data
+        rawUsersData.forEach(user => {
+            const email = user.email?.toLowerCase();
+            if (!email) return;
+
+            if (!mergedUsers.has(email)) {
+                mergedUsers.set(email, { ...user });
+            } else {
+                const existing = mergedUsers.get(email);
+                // Merge logic: Preserve highest visitCount and latest lastVisit
+                existing.visitCount = Math.max(existing.visitCount || 0, user.visitCount || 0);
+                if (user.lastVisit && (!existing.lastVisit || user.lastVisit > existing.lastVisit)) {
+                    existing.lastVisit = user.lastVisit;
+                }
+                if (user.role === 'admin') existing.role = 'admin';
+                if (!existing.name || existing.name === 'Cliente') existing.name = user.name;
+                // Prefer Firestore avatar if it exists, otherwise keep Auth one
+                if (user.avatar) existing.avatar = user.avatar;
+                if (!existing.avatar && user.photoURL) existing.avatar = user.photoURL;
+            }
+        });
+
         const now = new Date();
 
-        const enrichedUsers = authUsers.map((user) => {
-            const userEmail = user.email?.toLowerCase();
-            const userAppointments = allAppointments.filter((apt: any) =>
-                (apt.clientEmail?.toLowerCase() === userEmail || apt.clientId === user.uid) && apt.status !== 'blocked'
-            );
-
-            const pastAppointments = userAppointments.filter((apt: any) => apt.date <= todayStr);
-            const visitCount = pastAppointments.length;
-            const lastVisit = pastAppointments.length > 0 ? pastAppointments[0].date : null;
-
+        return Array.from(mergedUsers.values()).map(user => {
+            const lastVisitDate = user.lastVisit ? new Date(user.lastVisit) : null;
             let status = 'Nuevo';
             let statusType = 'new';
-
-            const lastVisitDate = lastVisit ? new Date(lastVisit) : null;
-            const creationTime = new Date(user.metadata.creationTime);
-            const daysSinceCreation = Math.floor((now.getTime() - creationTime.getTime()) / (1000 * 3600 * 24));
 
             if (lastVisitDate) {
                 const daysSinceLastVisit = Math.floor((now.getTime() - lastVisitDate.getTime()) / (1000 * 3600 * 24));
@@ -530,30 +684,20 @@ export async function getAdminUsers() {
                     status = 'Regular';
                     statusType = 'active';
                 }
-            } else if (daysSinceCreation <= 15) {
-                status = 'Nuevo';
-                statusType = 'new';
-            } else {
-                status = 'Sin Visitas';
-                statusType = 'inactive';
             }
 
             return {
-                id: user.uid,
-                name: user.displayName || 'Sin Nombre',
+                id: user.id,
+                name: user.name || 'Sin Nombre',
                 email: user.email || 'Sin Email',
-                avatar: user.photoURL || user.providerData?.[0]?.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'User'}&background=random`,
-                visitCount,
-                lastVisit: lastVisit ? format(parseISO(lastVisit), 'dd-MM-yyyy') : 'N/A',
+                avatar: user.avatar || user.photoURL || `https://ui-avatars.com/api/?name=${user.name || 'User'}&background=random`,
+                visitCount: user.visitCount || 0,
+                lastVisit: user.lastVisit ? format(parseISO(user.lastVisit), 'dd-MM-yyyy') : 'N/A',
                 status,
                 statusType,
-                daysSinceCreation,
-                daysSinceLastVisit: lastVisitDate ? Math.floor((now.getTime() - lastVisitDate.getTime()) / (1000 * 3600 * 24)) : null,
-                role: user.customClaims?.role || 'user'
+                role: user.role || 'user'
             };
         });
-
-        return enrichedUsers;
     } catch (error) {
         console.error('Error getting admin users:', error);
         return [];
@@ -655,16 +799,20 @@ export async function deleteService(id: string) {
 // AUDIT LOGS
 // ============================================
 
-export async function getAuditLogs(limit: number = 50) {
-    const admin = await getAdminUser();
-    if (!admin) throw new Error('Unauthorized');
+export async function getAuditLogs(limit: number = 20, lastTimestamp?: string) {
+    await getAdminCheck();
 
     try {
-        const snapshot = await adminDb
+        let query = adminDb
             .collection('auditLogs')
             .orderBy('timestamp', 'desc')
-            .limit(limit)
-            .get();
+            .limit(limit);
+
+        if (lastTimestamp) {
+            query = query.startAfter(lastTimestamp);
+        }
+
+        const snapshot = await query.get();
 
         return snapshot.docs.map(doc => ({
             id: doc.id,

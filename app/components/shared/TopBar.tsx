@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 export default function TopBar() {
     const { user, logout } = useAuth();
     const router = useRouter();
-    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
     const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -199,28 +199,7 @@ export default function TopBar() {
                 </div>
             </header>
 
-            <Modal
-                isOpen={isOpen}
-                onOpenChange={onOpenChange}
-                placement="center"
-                backdrop="blur"
-                classNames={{
-                    base: "bg-zinc-950 border border-zinc-800",
-                    header: "border-b border-zinc-900",
-                    closeButton: "hover:bg-zinc-900",
-                }}
-            >
-                <ModalContent>
-                    {(onClose) => (
-                        <>
-                            <ModalHeader className="flex flex-col gap-1 text-white">Mi Perfil</ModalHeader>
-                            <ModalBody>
-                                <Profile />
-                            </ModalBody>
-                        </>
-                    )}
-                </ModalContent>
-            </Modal>
+            {isOpen && <Profile onClose={onClose} />}
         </>
     );
 }

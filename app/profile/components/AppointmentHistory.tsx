@@ -8,15 +8,17 @@ import { useAuth } from "../../context/AuthContext";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
-export default function AppointmentHistory() {
+export default function AppointmentHistory({ email }: { email?: string }) {
     const { user } = useAuth();
     const [appointments, setAppointments] = useState<(AppointmentData & { id: string })[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const targetEmail = email || user?.email;
+
     useEffect(() => {
         const fetchAppointments = async () => {
-            if (user?.email) {
-                const data = await getUserAppointments(user.email);
+            if (targetEmail) {
+                const data = await getUserAppointments(targetEmail);
                 // Sort by date and time (descending)
                 const sorted = data.sort((a, b) => {
                     const dateA = new Date(`${a.date}T${a.time}`);
@@ -29,7 +31,7 @@ export default function AppointmentHistory() {
         };
 
         fetchAppointments();
-    }, [user?.email]);
+    }, [targetEmail]);
 
     if (loading) {
         return (
@@ -48,61 +50,63 @@ export default function AppointmentHistory() {
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Tus Citas</h4>
-                <span className="bg-[#D09E1E]/10 text-[#D09E1E] text-[9px] font-black px-2 py-0.5 rounded-full border border-[#D09E1E]/20 uppercase">
-                    {appointments.length} Total
-                </span>
-            </div>
+        <div className="grid gap-3">
+            {appointments.map((appointment) => {
+                const dateObj = parseISO(appointment.date);
+                const formattedDate = format(dateObj, "d 'de' MMMM", { locale: es });
 
-            <div className="grid gap-3">
-                {appointments.map((appointment) => {
-                    const dateObj = parseISO(appointment.date);
-                    const formattedDate = format(dateObj, "d 'de' MMMM", { locale: es });
+                return (
+                    <Card
+                        key={appointment.id}
+                        className="bg-white/[0.03] border-white/5 backdrop-blur-md shadow-none hover:border-[#E5B454]/30 transition-all group active:scale-[0.98] rounded-[1.5rem]"
+                    >
+                        <CardBody className="p-4">
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-[#E5B454]/10 flex items-center justify-center text-[#E5B454] border border-[#E5B454]/20 group-hover:bg-[#E5B454]/20 transition-colors flex-shrink-0">
+                                    <Scissors size={20} />
+                                </div>
 
-                    return (
-                        <Card
-                            key={appointment.id}
-                            className="bg-zinc-900/40 border-zinc-800/50 backdrop-blur-md shadow-none hover:border-[#D09E1E]/30 transition-all group active:scale-[0.98]"
-                        >
-                            <CardBody className="p-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-[#D09E1E]/10 flex items-center justify-center text-[#D09E1E] border border-[#D09E1E]/20 group-hover:bg-[#D09E1E]/20 transition-colors">
-                                        <Scissors size={20} />
-                                    </div>
-
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <h5 className="font-bold text-white text-sm truncate uppercase tracking-tight">
-                                                {appointment.serviceName}
-                                            </h5>
-                                            <span className="text-[10px] font-black text-[#D09E1E] whitespace-nowrap">
-                                                {appointment.time}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 mt-1">
-                                            <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                                                <Calendar size={12} className="text-zinc-600" />
-                                                {formattedDate}
-                                            </div>
-                                            <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                                                <User size={12} className="text-zinc-600" />
-                                                {appointment.barberName}
-                                            </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                        <h5 className="font-bold text-white text-sm truncate uppercase tracking-tight">
+                                            {appointment.serviceName}
+                                        </h5>
+                                        <div className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${appointment.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                            appointment.status === 'confirmed' ? 'bg-[#E5B454]/10 text-[#E5B454] border-[#E5B454]/20' :
+                                                'bg-red-500/10 text-red-500 border-red-500/20'
+                                            }`}>
+                                            {appointment.status === 'completed' ? 'Completado' :
+                                                appointment.status === 'confirmed' ? 'Confirmado' :
+                                                    appointment.status === 'cancelled' ? 'Cancelado' :
+                                                        appointment.status === 'rejected' ? 'Rechazado' :
+                                                            appointment.status === 'blocked' ? 'Bloqueado' : appointment.status}
                                         </div>
                                     </div>
 
-                                    <div className="text-zinc-700 group-hover:text-[#D09E1E] transition-colors pl-2">
-                                        <ChevronRight size={18} />
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                            <Calendar size={12} className="text-zinc-600" />
+                                            {formattedDate}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                            <Clock size={12} className="text-zinc-600" />
+                                            {appointment.time}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-1">
+                                        <User size={12} className="text-zinc-600" />
+                                        {appointment.barberName}
                                     </div>
                                 </div>
-                            </CardBody>
-                        </Card>
-                    );
-                })}
-            </div>
+
+                                <div className="text-zinc-700 group-hover:text-[#E5B454] transition-colors pl-2 pt-1">
+                                    <ChevronRight size={18} />
+                                </div>
+                            </div>
+                        </CardBody>
+                    </Card>
+                );
+            })}
         </div>
     );
 }

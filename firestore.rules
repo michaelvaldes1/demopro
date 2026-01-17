@@ -13,14 +13,28 @@ service cloud.firestore {
       allow read: if isAdmin() || (request.auth != null && resource.data.clientEmail == request.auth.token.email);
       
       // Clients can only create (write) their own appointments.
-      // We'll mostly use the proxy, but rules should still be solid.
-      allow create: if request.auth != null;
+      // Validation: Ensure the clientEmail in the data matches the authenticated user's email.
+      allow create: if isAdmin() || (request.auth != null && request.resource.data.clientEmail == request.auth.token.email);
       allow update, delete: if isAdmin();
     }
 
     match /notifications/{notification} {
       allow read, update: if request.auth != null && request.auth.token.email == resource.data.userId;
-      allow create: if request.auth != null;
+      // Validation: Ensure the userId in the notification data matches the authenticated user's email.
+      allow create: if isAdmin() || (request.auth != null && request.resource.data.userId == request.auth.token.email);
+    }
+
+    match /users/{userEmail} {
+      // Admins have full access to manage users
+      allow read, write: if isAdmin();
+      
+      // Users can only read their own profile data.
+      // Escribir (create/update) está PROHIBIDO desde el cliente para evitar "hackeos" de estadísticas.
+      // El Admin SDK en el servidor se encarga de las actualizaciones.
+      allow read: if request.auth != null && request.auth.token.email.lower() == userEmail.lower();
+      
+      // Prevent normal users from listing all users
+      allow list: if isAdmin();
     }
 
     // Default deny for everything else

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import { Avatar } from "@heroui/react";
 import { ScheduleItem } from '../types';
 import { MOCK_TIME_SLOTS } from '@/app/constants/booking';
 import { format, parseISO, startOfToday, isBefore, isSameDay, set } from 'date-fns';
@@ -17,6 +18,14 @@ interface TimelineProps {
     selectedBarberId: string;
     barbers: any[];
 }
+
+const STATUS_LABELS_ES: Record<string, string> = {
+    'confirmed': 'Confirmada',
+    'completed': 'Completada',
+    'cancelled': 'Cancelada',
+    'no-show': 'No Asistió',
+    'blocked': 'Bloqueado',
+};
 
 const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selectedBarberId, barbers }) => {
     const router = useRouter();
@@ -153,7 +162,7 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
     const humanDate = format(parseISO(selectedDate), "EEEE, d 'de' MMMM", { locale: es }).toUpperCase();
 
     return (
-        <div className="px-4 md:px-8 mt-10 pb-32">
+        <div className="pl-4 pr-0 md:px-8 mt-10 pb-32">
             <div className="flex justify-between items-center mb-10">
                 <h2 className="text-2xl font-black text-white tracking-tight">Agenda del Día</h2>
                 <div
@@ -171,7 +180,7 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
                         className="absolute left-0 right-0 z-20 pointer-events-none flex items-center gap-3"
                         style={{ top: `${currentTimePos}px`, transition: 'top 1s cubic-bezier(0.23, 1, 0.32, 1)' }}
                     >
-                        <div className="w-16 flex justify-end">
+                        <div className="w-12 flex justify-end">
                             <span className="text-[9px] font-black text-[#E5B454] bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-[#E5B454]/30 shadow-2xl">
                                 AHORA
                             </span>
@@ -186,20 +195,26 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
                 {timelineItems.map((slotItem, idx) => (
                     <div
                         key={slotItem.slotId + idx}
-                        className={`time-slot-row flex gap-6 transition-all duration-500 ${slotItem.isPast ? 'opacity-30 grayscale-[0.8]' : ''}`}
+                        className={`time-slot-row flex gap-3 md:gap-6 transition-all duration-500 ${slotItem.isPast ? 'opacity-30 grayscale-[0.8]' : ''}`}
                     >
                         {/* Columna de Hora */}
-                        <div className="w-16 flex flex-col items-center pt-3">
+                        <div className="w-12 flex flex-col items-center pt-3">
                             <span className={`text-[11px] font-black tracking-tighter ${slotItem.appointments.length === 0 ? 'text-white/20' : 'text-white/80'}`}>
                                 {slotItem.time}
                             </span>
                             {idx !== timelineItems.length - 1 && (
-                                <div className="w-[1.5px] h-full bg-gradient-to-b from-white/10 to-transparent mt-3 min-h-[60px]" />
+                                <div className="w-[1.5px] h-full bg-gradient-to-b from-white/30 to-transparent mt-3 min-h-[60px]" />
                             )}
                         </div>
 
                         {/* Content Liquid Glass */}
-                        <div className="flex-1 flex flex-row gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                        <div
+                            className="flex-1 flex flex-row gap-4 overflow-x-auto pb-4 custom-scrollbar"
+                            style={{
+                                maskImage: 'linear-gradient(to right, transparent 0%, black 14%, black 90%, transparent 100%)',
+                                WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)'
+                            }}
+                        >
                             {slotItem.appointments.length > 0 ? (
                                 slotItem.appointments.map((item) => (
                                     <div
@@ -214,19 +229,32 @@ const Timeline: React.FC<TimelineProps> = ({ appointments, selectedDate, selecte
                                     >
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
-                                                    <User size={18} />
+                                                <div className="relative p-1 rounded-full border border-white/5 bg-white/5 shadow-inner">
+                                                    <Avatar
+                                                        src={item.clientAvatar || undefined}
+                                                        name={item.clientName?.split(' ').map((n: string) => n[0]).join('') || "U"}
+                                                        className="w-10 h-10 border border-white/10"
+                                                        imgProps={{
+                                                            referrerPolicy: "no-referrer",
+                                                            className: "object-cover"
+                                                        }}
+                                                        classNames={{
+                                                            base: "bg-zinc-900",
+                                                            name: "text-[#E5B454] font-black text-sm"
+                                                        }}
+                                                    />
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-bold text-white text-base truncate max-w-[120px]">{item.clientName}</h4>
+                                                    <h4 className="font-bold text-white text-base truncate max-w-[150px] leading-tight">{item.clientName}</h4>
+                                                    <p className="text-[10px] text-white/40 truncate max-w-[150px] mb-1">{item.clientEmail}</p>
                                                     <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${item.status === 'confirmed' ? 'text-emerald-400 border-emerald-400/20 bg-emerald-400/10' : 'text-white/40 border-white/10'
                                                         }`}>
-                                                        {item.status}
+                                                        {item.status ? (STATUS_LABELS_ES[item.status] || item.status) : 'Pendiente'}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                            <div className="flex gap-2 transition-all">
                                                 {item.status !== 'blocked' ? (
                                                     <button
                                                         onClick={() => { setSelectedAppointment(item); setIsEditModalOpen(true); }}

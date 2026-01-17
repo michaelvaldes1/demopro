@@ -1,4 +1,4 @@
-import { Montserrat } from "next/font/google";
+import { Montserrat, Poppins } from "next/font/google";
 import "./styles/globals.css";
 
 import { Providers } from "./providers";
@@ -6,6 +6,12 @@ import { Providers } from "./providers";
 const montserrat = Montserrat({
   subsets: ["latin"],
   variable: "--font-montserrat",
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-poppins",
 });
 
 export const metadata = {
@@ -32,19 +38,24 @@ export const metadata = {
   },
 };
 
+import FooterWrapper from "@/components/shared/FooterWrapper";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html className={`${montserrat.variable} dark text-foreground bg-background font-sans`} lang="es" suppressHydrationWarning>
+    <html className={`${montserrat.variable} ${poppins.variable} dark text-foreground bg-background font-sans`} lang="es" suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back_ios_new,chevron_left,chevron_right,schedule,arrow_forward" />
       </head>
-      <body>
+      <body className="flex flex-col min-h-screen">
         <Providers>
-          {children}
+          <div className="flex-1">
+            {children}
+          </div>
+          <FooterWrapper />
         </Providers>
       </body>
     </html>
