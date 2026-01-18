@@ -8,6 +8,7 @@ import { SERVICES } from '@/app/constants/constants';
 import { MOCK_BARBERS } from '@/app/constants/booking';
 import { format, subDays, parseISO } from 'date-fns';
 import { cache } from 'react';
+import { revalidatePath } from 'next/cache';
 
 async function getAdminUser() {
     const cookieStore = await cookies();
@@ -785,6 +786,10 @@ export async function addService(serviceData: any) {
             metadata: { price: serviceData.price, category: serviceData.category }
         });
 
+        revalidatePath('/');
+        revalidatePath('/dashboard');
+        revalidatePath('/BarberService');
+
         return { id: docRef.id, success: true };
     } catch (error) {
         // If something fails during image upload, we still have the doc but maybe without image
@@ -825,6 +830,10 @@ export async function updateService(id: string, serviceData: any) {
         metadata: { price: serviceData.price, category: serviceData.category }
     });
 
+    revalidatePath('/');
+    revalidatePath('/dashboard');
+    revalidatePath('/BarberService');
+
     return { success: true };
 }
 
@@ -843,6 +852,10 @@ export async function deleteService(id: string) {
         resourceId: id,
         resourceName: serviceName
     });
+
+    revalidatePath('/');
+    revalidatePath('/dashboard');
+    revalidatePath('/BarberService');
 
     return { success: true };
 }

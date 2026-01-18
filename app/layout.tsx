@@ -15,6 +15,7 @@ const poppins = Poppins({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://miagobarber.com"),
   title: {
     default: "MiagoBarber | Agenda de Citas Premium",
     template: "%s | MiagoBarber",
@@ -43,6 +44,10 @@ export const metadata = {
     title: "MiagoBarber | Barbería Premium",
     description: "Excelente estilo, máxima precisión. Reserva tu cita online en MiagoBarber.",
     images: ["/op.png"],
+  },
+  icons: {
+    icon: "/miago-single.png",
+    apple: "/miago-single.png",
   },
 };
 

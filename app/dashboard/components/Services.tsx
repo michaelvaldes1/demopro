@@ -14,7 +14,7 @@ export default async function Services() {
             <h2 className="text-3xl font-black text-white mb-8">Nuestros Servicios</h2>
 
             <div className="flex overflow-x-auto pb-6 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory">
-                {services.slice(0, 6).map((service) => (
+                {services.map((service) => (
                     <div
                         key={service.id}
                         className="flex-shrink-0 w-64 h-80 relative rounded-3xl overflow-hidden snap-start group"
