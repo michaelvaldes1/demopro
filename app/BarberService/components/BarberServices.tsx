@@ -40,7 +40,7 @@ export default function ServicesPage() {
                 <div className="relative px-2">
                     <div className="flex flex-col gap-1 relative z-10">
                         <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-lg uppercase">
-                            Servicios <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E5B454] to-[#D09E1E]">Exclusivos</span>
+                            Servicios <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D09E1E] to-[#D09E1E]">Exclusivos</span>
                         </h2>
                         <p className="text-white/40 text-xs md:text-sm font-medium tracking-wide uppercase pl-1">
                             Elige el servicio que mejor se adapte a tu estilo.
@@ -59,11 +59,11 @@ export default function ServicesPage() {
                                 key={cat.value}
                                 onPress={() => setActiveCategory(cat.value)}
                                 className={`rounded-full px-5 h-9 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 min-w-fit ${activeCategory === cat.value
-                                        ? 'text-black scale-105'
-                                        : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
+                                    ? 'text-black scale-105'
+                                    : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
                                     }`}
                                 style={activeCategory === cat.value ? {
-                                    background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                    background: 'linear-gradient(135deg, #D09E1E 0%, #D09E1E 100%)',
                                     boxShadow: '0 4px 15px rgba(208, 158, 30, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
                                 } : {}}
                                 size="sm"
@@ -80,8 +80,8 @@ export default function ServicesPage() {
                         <div className="flex justify-center items-center h-64 w-full">
                             {/* Liquid Gold Spinner */}
                             <div className="relative">
-                                <div className="absolute inset-0 rounded-full blur-md bg-[#E5B454]/20"></div>
-                                <div className="w-12 h-12 border-4 border-[#E5B454] border-t-transparent rounded-full animate-spin relative z-10"></div>
+                                <div className="absolute inset-0 rounded-full blur-md bg-[#D09E1E]/20"></div>
+                                <div className="w-12 h-12 border-4 border-[#D09E1E] border-t-transparent rounded-full animate-spin relative z-10"></div>
                             </div>
                         </div>
                     ) : filteredServices.length === 0 ? (

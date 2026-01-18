@@ -98,7 +98,7 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                     <div className="flex flex-col items-center">
                                         {/* Profile Image - Now nicely overlapping without clipping */}
                                         <div className="relative mb-4 group">
-                                            <div className="absolute -inset-1 bg-gradient-to-br from-[#E5B454] to-[#D09E1E] rounded-full opacity-30 blur-lg group-hover:opacity-50 transition-opacity duration-500" />
+                                            <div className="absolute -inset-1 bg-gradient-to-br from-[#D09E1E] to-[#D09E1E] rounded-full opacity-30 blur-lg group-hover:opacity-50 transition-opacity duration-500" />
                                             <div className="relative w-36 h-36 rounded-full border-[5px] border-[#09090b] overflow-hidden shadow-2xl bg-zinc-900">
                                                 <Image
                                                     src={barber.image}
@@ -114,7 +114,7 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                             {barber.name}
                                         </h2>
                                         <div className="mt-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
-                                            <p className="text-[#E5B454] text-[10px] font-black uppercase tracking-[0.2em]">
+                                            <p className="text-[#D09E1E] text-[10px] font-black uppercase tracking-[0.2em]">
                                                 Barbero Profesional
                                             </p>
                                         </div>
@@ -142,7 +142,7 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                         {portfolioImages.length > 0 && (
                                             <div className="w-full mt-10">
                                                 <div className="flex items-center gap-3 mb-6">
-                                                    <div className="p-2 rounded-xl bg-white/5 text-[#E5B454] border border-white/5">
+                                                    <div className="p-2 rounded-xl bg-white/5 text-[#D09E1E] border border-white/5">
                                                         <ImageIcon size={16} />
                                                     </div>
                                                     <h3 className="text-sm font-bold text-white uppercase tracking-widest">Portafolio</h3>
@@ -177,7 +177,7 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
                                 <Button
                                     className="w-full h-14 rounded-2xl font-black text-black uppercase tracking-wide text-sm shadow-[0_0_30px_-5px_rgba(208,158,30,0.3)] hover:shadow-[0_0_40px_-5px_rgba(208,158,30,0.5)] hover:scale-[1.02] active:scale-95 transition-all"
                                     style={{
-                                        background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                        background: 'linear-gradient(135deg, #D09E1E 0%, #D09E1E 100%)',
                                     }}
                                     onPress={() => window.location.href = `/booking?barberId=${barber.name.toLowerCase()}`}
                                 >
@@ -261,7 +261,7 @@ export function BarberModal({ isOpen, onOpenChange, barber }: BarberModalProps) 
 
                             <div className="absolute bottom-8 left-0 right-0 text-center z-50">
                                 <p className="text-white/80 font-bold text-lg drop-shadow-md">
-                                    {barber.name} <span className="text-[#E5B454] mx-2">•</span> Portafolio
+                                    {barber.name} <span className="text-[#D09E1E] mx-2">•</span> Portafolio
                                 </p>
                             </div>
                         </div>

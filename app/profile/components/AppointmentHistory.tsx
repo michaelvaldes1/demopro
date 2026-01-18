@@ -58,11 +58,11 @@ export default function AppointmentHistory({ email }: { email?: string }) {
                 return (
                     <Card
                         key={appointment.id}
-                        className="bg-white/[0.03] border-white/5 backdrop-blur-md shadow-none hover:border-[#E5B454]/30 transition-all group active:scale-[0.98] rounded-[1.5rem]"
+                        className="bg-white/[0.03] border-white/5 backdrop-blur-md shadow-none hover:border-[#D09E1E]/30 transition-all group active:scale-[0.98] rounded-[1.5rem]"
                     >
                         <CardBody className="p-4">
                             <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-[#E5B454]/10 flex items-center justify-center text-[#E5B454] border border-[#E5B454]/20 group-hover:bg-[#E5B454]/20 transition-colors flex-shrink-0">
+                                <div className="w-12 h-12 rounded-2xl bg-[#D09E1E]/10 flex items-center justify-center text-[#D09E1E] border border-[#D09E1E]/20 group-hover:bg-[#D09E1E]/20 transition-colors flex-shrink-0">
                                     <Scissors size={20} />
                                 </div>
 
@@ -72,7 +72,7 @@ export default function AppointmentHistory({ email }: { email?: string }) {
                                             {appointment.serviceName}
                                         </h5>
                                         <div className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider border ${appointment.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                            appointment.status === 'confirmed' ? 'bg-[#E5B454]/10 text-[#E5B454] border-[#E5B454]/20' :
+                                            appointment.status === 'confirmed' ? 'bg-[#D09E1E]/10 text-[#D09E1E] border-[#D09E1E]/20' :
                                                 'bg-red-500/10 text-red-500 border-red-500/20'
                                             }`}>
                                             {appointment.status === 'completed' ? 'Completado' :
@@ -99,7 +99,7 @@ export default function AppointmentHistory({ email }: { email?: string }) {
                                     </div>
                                 </div>
 
-                                <div className="text-zinc-700 group-hover:text-[#E5B454] transition-colors pl-2 pt-1">
+                                <div className="text-zinc-700 group-hover:text-[#D09E1E] transition-colors pl-2 pt-1">
                                     <ChevronRight size={18} />
                                 </div>
                             </div>

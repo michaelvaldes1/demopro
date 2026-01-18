@@ -30,6 +30,32 @@ export async function POST(request: Request) {
             updatedAt: new Date().toISOString(),
         });
 
+        // Forward to n8n webhook
+        const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+        if (n8nWebhookUrl) {
+            try {
+                console.log('Sending data to n8n webhook:', n8nWebhookUrl);
+                const n8nResponse = await fetch(n8nWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: docRef.id,
+                        ...body,
+                        createdAt: new Date().toISOString()
+                    })
+                });
+
+                if (n8nResponse.ok) {
+                    console.log('Successfully sent to n8n');
+                } else {
+                    const errorText = await n8nResponse.text();
+                    console.error('n8n webhook failed:', n8nResponse.status, errorText);
+                }
+            } catch (err) {
+                console.error('Fetch exception for n8n:', err);
+            }
+        }
+
         // Optimization: Track the user in a dedicated collection for faster stats
         // Standardize: Use lowercase email as the unique document ID
         const userEmail = (body.clientEmail || decodedToken.email).toLowerCase();

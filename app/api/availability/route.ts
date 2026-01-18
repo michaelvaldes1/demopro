@@ -20,8 +20,8 @@ export async function GET(request: Request) {
 
         const unavailableSlots = snapshot.docs
             .map(doc => doc.data())
-            // Filter out cancelled or no-show, keep confirmed, blocked, completed
-            .filter(data => ['confirmed', 'blocked', 'completed'].includes(data.status))
+            // Filter out cancelled or no-show, keep confirmed, blocked, completed, preagendada
+            .filter(data => ['confirmed', 'blocked', 'completed', 'preagendada'].includes(data.status))
             .map(data => data.time);
 
         return NextResponse.json(unavailableSlots);

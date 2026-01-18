@@ -129,12 +129,12 @@ export default function UsersPage() {
                                     className: "object-cover"
                                 }}
                                 classNames={{
-                                    base: "bg-zinc-900 ring-2 ring-[#E5B454]/30",
-                                    name: "text-[#E5B454] font-bold"
+                                    base: "bg-zinc-900 ring-2 ring-[#D09E1E]/30",
+                                    name: "text-[#D09E1E] font-bold"
                                 }}
                             />
                             {user.role === 'admin' && (
-                                <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#E5B454] rounded-full border-2 border-black shadow-[0_0_10px_rgba(229,180,84,0.6)] flex items-center justify-center z-10">
+                                <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#D09E1E] rounded-full border-2 border-black shadow-[0_0_10px_rgba(208,158,30,0.6)] flex items-center justify-center z-10">
                                     <Shield size={8} className="text-black" />
                                 </div>
                             )}
@@ -148,7 +148,7 @@ export default function UsersPage() {
             case "role":
                 return (
                     <div className={`inline-flex px-3 py-1 rounded-lg border ${user.role === 'admin'
-                        ? 'bg-[#E5B454]/10 border-[#E5B454]/30 text-[#E5B454]'
+                        ? 'bg-[#D09E1E]/10 border-[#D09E1E]/30 text-[#D09E1E]'
                         : 'bg-white/5 border-white/10 text-zinc-400'
                         }`}>
                         <p className="text-[10px] font-black uppercase tracking-widest">
@@ -209,7 +209,7 @@ export default function UsersPage() {
                                     <DropdownItem
                                         key="make_admin"
                                         startContent={<Shield size={14} />}
-                                        className="text-[#E5B454] data-[hover=true]:bg-[#E5B454]/10 rounded-xl"
+                                        className="text-[#D09E1E] data-[hover=true]:bg-[#D09E1E]/10 rounded-xl"
                                         onPress={() => handleRoleChange(user.id, user.role)}
                                     >
                                         Hacer Admin
@@ -224,7 +224,6 @@ export default function UsersPage() {
                                         Quitar Admin
                                     </DropdownItem>
                                 )}
-                                <DropdownItem key="block" startContent={<ShieldAlert size={14} />} className="text-danger data-[hover=true]:bg-danger/10 rounded-xl">Bloquear</DropdownItem>
                             </DropdownMenu>
                         </Dropdown>
                     </div>
@@ -257,7 +256,7 @@ export default function UsersPage() {
             <div className="flex flex-col md:flex-row justify-between gap-6 mb-8 items-end">
                 <div className="flex items-center gap-3 w-full md:max-w-lg">
                     <div className="relative flex-1 group">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/30 group-focus-within:text-[#E5B454] transition-colors">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/30 group-focus-within:text-[#D09E1E] transition-colors">
                             <Search size={18} />
                         </div>
                         <input
@@ -265,7 +264,7 @@ export default function UsersPage() {
                             value={filterValue}
                             onChange={(e) => onSearchChange(e.target.value)}
                             placeholder="BUSCAR USUARIO..."
-                            className="w-full pl-12 pr-10 py-3.5 bg-black/20 border border-white/5 rounded-2xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:bg-black/40 focus:border-[#E5B454]/30 focus:shadow-[0_0_20px_rgba(229,180,84,0.1)] transition-all uppercase tracking-wider font-bold shadow-inner"
+                            className="w-full pl-12 pr-10 py-3.5 bg-black/20 border border-white/5 rounded-2xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:bg-black/40 focus:border-[#D09E1E]/30 focus:shadow-[0_0_20px_rgba(229,180,84,0.1)] transition-all uppercase tracking-wider font-bold shadow-inner"
                         />
                         {filterValue && (
                             <button
@@ -285,7 +284,7 @@ export default function UsersPage() {
                         className="w-[50px] h-[50px] flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5 border border-white/10 hover:border-white/20 hover:text-white text-white/50 rounded-2xl transition-all shadow-lg active:scale-95 backdrop-blur-md"
                         title="Actualizar lista"
                     >
-                        <RefreshCw size={20} className={loading ? "animate-spin text-[#E5B454]" : ""} />
+                        <RefreshCw size={20} className={loading ? "animate-spin text-[#D09E1E]" : ""} />
                     </button>
                 </div>
 
@@ -302,7 +301,7 @@ export default function UsersPage() {
                                 : 'text-white/40 hover:text-white hover:bg-white/5'
                                 }`}
                             style={statusFilter === status.uid ? {
-                                background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                background: 'linear-gradient(135deg, #D09E1E 0%, #D09E1E 100%)',
                                 boxShadow: '0 4px 12px rgba(208, 158, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
                             } : {}}
                         >
@@ -328,7 +327,7 @@ export default function UsersPage() {
                         <div className="flex justify-center items-center h-80">
                             {/* Spinner con Glow */}
                             <div className="relative">
-                                <div className="w-12 h-12 border-4 border-[#E5B454] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(229,180,84,0.3)]"></div>
+                                <div className="w-12 h-12 border-4 border-[#D09E1E] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(229,180,84,0.3)]"></div>
                             </div>
                         </div>
                     ) : (
@@ -415,7 +414,7 @@ export default function UsersPage() {
                                                                 key={pageNum}
                                                                 onClick={() => setPage(pageNum)}
                                                                 className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 ${page === pageNum
-                                                                    ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
+                                                                    ? 'bg-gradient-to-br from-[#D09E1E] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
                                                                     : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
                                                                     }`}
                                                             >
@@ -440,7 +439,7 @@ export default function UsersPage() {
                                                         key={pageNum}
                                                         onClick={() => setPage(pageNum)}
                                                         className={`min-w-[36px] h-9 px-2 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300 ${page === pageNum
-                                                            ? 'bg-gradient-to-br from-[#E5B454] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
+                                                            ? 'bg-gradient-to-br from-[#D09E1E] to-[#D09E1E] text-black shadow-[0_4px_12px_rgba(208,158,30,0.3)] scale-105'
                                                             : 'bg-transparent text-white/40 hover:text-white hover:bg-white/5'
                                                             }`}
                                                     >

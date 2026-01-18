@@ -52,7 +52,7 @@ export default function Profile({ onClose }: { onClose?: () => void }) {
                         {/* Header / Avatar Section */}
                         <div className="flex flex-col items-center text-center relative">
                             {/* Glow effect behind avatar */}
-                            <div className="absolute top-0 w-32 h-32 bg-[#E5B454]/20 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute top-0 w-32 h-32 bg-[#D09E1E]/20 rounded-full blur-3xl pointer-events-none" />
 
                             <div className="relative p-1.5 rounded-full border border-white/10 bg-gradient-to-br from-white/10 to-transparent mb-4 shadow-xl">
                                 <Avatar
@@ -65,12 +65,12 @@ export default function Profile({ onClose }: { onClose?: () => void }) {
                                         className: "object-cover"
                                     }}
                                     classNames={{
-                                        base: "bg-zinc-900 ring-2 ring-[#E5B454]/50",
-                                        name: "text-[#E5B454] font-bold"
+                                        base: "bg-zinc-900 ring-2 ring-[#D09E1E]/50",
+                                        name: "text-[#D09E1E] font-bold"
                                     }}
                                 />
                                 {/* Verified Badge */}
-                                <div className="absolute bottom-0 right-0 bg-[#E5B454] text-black p-1.5 rounded-full border-2 border-[#09090b] shadow-lg">
+                                <div className="absolute bottom-0 right-0 bg-[#D09E1E] text-black p-1.5 rounded-full border-2 border-[#09090b] shadow-lg">
                                     <ShieldCheck size={14} strokeWidth={3} />
                                 </div>
                             </div>
@@ -80,7 +80,7 @@ export default function Profile({ onClose }: { onClose?: () => void }) {
                                     {user.displayName || "Usuario"}
                                 </h3>
                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[#E5B454] animate-pulse" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#D09E1E] animate-pulse" />
                                     <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Cliente MiagoBarber</span>
                                 </div>
                             </div>
@@ -89,7 +89,7 @@ export default function Profile({ onClose }: { onClose?: () => void }) {
                         {/* Info Tiles */}
                         <div className="grid gap-3">
                             <div className="p-4 rounded-[1.5rem] bg-white/[0.03] border border-white/5 flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-[#E5B454] border border-white/5 shadow-inner">
+                                <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-[#D09E1E] border border-white/5 shadow-inner">
                                     <User size={18} />
                                 </div>
                                 <div className="flex flex-col">
@@ -99,7 +99,7 @@ export default function Profile({ onClose }: { onClose?: () => void }) {
                             </div>
 
                             <div className="p-4 rounded-[1.5rem] bg-white/[0.03] border border-white/5 flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-[#E5B454] border border-white/5 shadow-inner">
+                                <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-[#D09E1E] border border-white/5 shadow-inner">
                                     <Mail size={18} />
                                 </div>
                                 <div className="flex flex-col overflow-hidden">
@@ -116,7 +116,7 @@ export default function Profile({ onClose }: { onClose?: () => void }) {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between px-2">
                                 <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Historial</h4>
-                                <div className="text-[9px] font-bold text-[#E5B454]/50 uppercase tracking-tighter">Desliza para ver más</div>
+                                <div className="text-[9px] font-bold text-[#D09E1E]/50 uppercase tracking-tighter">Desliza para ver más</div>
                             </div>
                             <div className="max-h-[250px] overflow-y-auto custom-scrollbar pr-1 flex flex-col gap-3">
                                 <AppointmentHistory />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Service } from './types';
 import { Clock, ArrowRight, User, Calendar, Trash2, Plus, X } from 'lucide-react';
 import { motion, PanInfo, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 interface SummaryCardProps {
   services: Service[];
@@ -225,6 +226,21 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
           >
             Cancelar Reserva
           </button>
+
+          <div className="flex flex-col items-center pt-2">
+            <a
+              href="https://miago.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 group transition-all"
+            >
+              <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Power By</span>
+              <div className="flex items-center gap-2">
+                <Image src="/miago-single.svg" alt="Logo" width={20} height={20} className="opacity-40 group-hover:opacity-100 transition-opacity" />
+                <span className="font-black text-[11px] tracking-widest text-zinc-600 group-hover:text-[#D09E1E] transition-colors uppercase font-[family-name:var(--font-poppins)]">MIAGO</span>
+              </div>
+            </a>
+          </div>
         </div>
 
         <div className="h-6" />

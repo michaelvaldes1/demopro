@@ -30,6 +30,15 @@ const actionConfig = {
     block: { label: 'Bloqueó', color: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/20', icon: Lock }
 };
 
+const STATUS_LABELS_ES: Record<string, string> = {
+    'confirmed': 'Confirmada',
+    'completed': 'Completada',
+    'cancelled': 'Cancelada',
+    'no-show': 'No Asistió',
+    'blocked': 'Bloqueado',
+    'preagendada': 'Preagendada'
+};
+
 const resourceConfig = {
     appointment: { label: 'Cita', icon: Calendar },
     service: { label: 'Servicio', icon: Scissors },
@@ -76,7 +85,9 @@ export default function AuditLogs({ initialLogs }: AuditLogsProps) {
         let description = `${action.label} ${resource.label.toLowerCase()}: ${log.resourceName}`;
 
         if (log.action === 'status_change' && log.metadata?.oldStatus && log.metadata?.newStatus) {
-            description += ` (${log.metadata.oldStatus} → ${log.metadata.newStatus})`;
+            const oldStatus = STATUS_LABELS_ES[log.metadata.oldStatus] || log.metadata.oldStatus;
+            const newStatus = STATUS_LABELS_ES[log.metadata.newStatus] || log.metadata.newStatus;
+            description += ` (${oldStatus} → ${newStatus})`;
         }
 
         return description;

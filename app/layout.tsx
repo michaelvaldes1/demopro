@@ -15,27 +15,41 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-
   title: {
-    default: "MiagoBarber | Agenda de citas",
+    default: "MiagoBarber | Agenda de Citas Premium",
     template: "%s | MiagoBarber",
   },
-  description: "Reserva tu cita en MiagoBarber fácilmente.",
+  description: "Vive la experiencia de barbería premium en MiagoBarber. Cortes de alta calidad, atención personalizada y estilo impecable. ¡Agenda tu cita online ahora!",
+  keywords: ["barbería", "corte de cabello", "barba", "Panamá", "MiagoBarber", "agenda online"],
+  authors: [{ name: "Miago" }],
   openGraph: {
-    title: "MiagoBarber | Agenda de citas",
-    description: "Agenda tu cita en minutos",
+    title: "MiagoBarber | Tu Estilo, Nuestra Pasión",
+    description: "Agenda tu cita en minutos y disfruta de un servicio de primera clase en MiagoBarber.",
+    url: "https://miagobarber.com",
     siteName: "MiagoBarber",
-    type: "website",
     locale: "es_PA",
+    type: "website",
     images: [
       {
-        url: "/og-miagobarber.png",
+        url: "/op.png",
         width: 1200,
         height: 630,
-        alt: "MiagoBarber - Agenda de citas",
+        alt: "MiagoBarber - Barbería Premium",
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "MiagoBarber | Barbería Premium",
+    description: "Excelente estilo, máxima precisión. Reserva tu cita online en MiagoBarber.",
+    images: ["/op.png"],
+  },
+};
+
+export const viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
 };
 
 import FooterWrapper from "@/components/shared/FooterWrapper";

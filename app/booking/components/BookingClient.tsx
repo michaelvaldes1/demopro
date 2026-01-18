@@ -35,7 +35,7 @@ export default function BookingClient({
     const [bookedSlots, setBookedSlots] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isBookingSuccess, setIsBookingSuccess] = useState(false);
-    const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmOpenChange } = useDisclosure();
+    const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onOpenChange: onConfirmOpenChange, onClose: onConfirmClose } = useDisclosure();
 
     const [selectedBarberId, setSelectedBarberId] = useState<string>(
         initialBarbers.find(b =>
@@ -138,6 +138,14 @@ export default function BookingClient({
         onConfirmOpen();
     };
 
+    const handleCloseModal = () => {
+        onConfirmClose();
+        if (isBookingSuccess) {
+            setSelectedTimeId('');
+            setIsBookingSuccess(false);
+        }
+    };
+
     const finalizeBooking = async () => {
         if (!user || !selectedTime || !selectedBarber) return;
         setIsSaving(true);
@@ -164,7 +172,7 @@ export default function BookingClient({
                     clientName: user.displayName || "Invitado",
                     clientEmail: user.email || "invitado@miago.com",
                     price: totalPrice,
-                    status: 'confirmed'
+                    status: 'preagendada'
                 })
             });
 
@@ -172,7 +180,7 @@ export default function BookingClient({
                 setIsBookingSuccess(true);
                 await createNotification({
                     userId: user.email!,
-                    title: "Cita Confirmada",
+                    title: "Cita Pre-agendada",
                     message: `Tu cita para ${serviceNames} el ${selectedDate.dayName} ${selectedDate.dateNumber} a las ${selectedTime.time} ha sido agendada con éxito.`,
                     isRead: false
                 });
@@ -183,11 +191,11 @@ export default function BookingClient({
                 if (refreshResponse.ok) {
                     const allAppointments = await refreshResponse.json();
                     const filtered = allAppointments
-                        .filter((apt: any) => apt.barberId === selectedBarberId && apt.date === selectedDate.fullDate && apt.status === 'confirmed')
+                        .filter((apt: any) => apt.barberId === selectedBarberId && apt.date === selectedDate.fullDate && (apt.status === 'confirmed' || apt.status === 'preagendada'))
                         .map((apt: any) => apt.time);
                     setBookedSlots(filtered);
                 }
-                setSelectedTimeId('');
+                setSelectedTimeId(selectedTimeId); // Keep it set to avoid unmounting modal
             }
         } catch (error) {
             console.error("Booking exception:", error);
@@ -251,17 +259,18 @@ export default function BookingClient({
             {selectedBarber && selectedTime && (
                 <BookingConfirmationModal
                     isOpen={isConfirmOpen}
-                    onOpenChange={onConfirmOpenChange}
+                    onOpenChange={handleCloseModal}
                     onConfirm={finalizeBooking}
                     isSaving={isSaving}
                     isSuccess={isBookingSuccess}
+                    isGuest={user?.isAnonymous}
                     bookingData={{
                         services: selectedServices,
                         barberName: selectedBarber.name,
                         date: `${selectedDate.dayName} ${selectedDate.dateNumber} de ${format(parseISO(selectedDate.fullDate), 'MMMM', { locale: es })}`,
                         time: selectedTime.time,
                         clientName: user?.displayName || "Invitado",
-                        clientEmail: user?.email || "N/A"
+                        clientEmail: user?.email || "invitado@miago.com"
                     }}
                 />
             )}

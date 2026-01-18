@@ -18,7 +18,7 @@ const STATUS_OPTIONS = [
     { value: 'completed', label: 'Completada', color: 'bg-blue-500' },
     { value: 'cancelled', label: 'Cancelada', color: 'bg-red-500' },
     { value: 'no-show', label: 'No Asistió', color: 'bg-yellow-500' },
-    { value: 'blocked', label: 'Bloqueado', color: 'bg-zinc-500' },
+    { value: 'preagendada', label: 'Preagendada', color: 'bg-amber-500' },
 ];
 
 export default function EditAppointmentModal({

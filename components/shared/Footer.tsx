@@ -18,8 +18,15 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                     <div className="space-y-6">
                         <Link href="/" className="inline-block">
                             <div className="flex items-center gap-2">
+                                <Image
+                                    src="/miago-single.svg"
+                                    alt="Logo"
+                                    width={32}
+                                    height={32}
+                                    className="drop-shadow-[0_0_8px_rgba(208,158,30,0.3)]"
+                                />
                                 <span className="text-2xl font-black tracking-tighter text-white">
-                                    MIAGO<span className="text-[#E5B454]">BARBER</span>
+                                    MIAGO<span className="text-[#D09E1E]">BARBER</span>
                                 </span>
                             </div>
                         </Link>
@@ -47,10 +54,10 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                                 <Link href="/booking" className="text-zinc-500 hover:text-[#E5B454] text-sm transition-colors">Reservar Cita</Link>
                             </li>
                             <li>
-                                <Link href="/services" className="text-zinc-500 hover:text-[#E5B454] text-sm transition-colors">Nuestros Servicios</Link>
+                                <Link href="/#services" className="text-zinc-500 hover:text-[#E5B454] text-sm transition-colors">Nuestros Servicios</Link>
                             </li>
                             <li>
-                                <Link href="/barbers" className="text-zinc-500 hover:text-[#E5B454] text-sm transition-colors">Nuestros Barberos</Link>
+                                <Link href="/#barbers" className="text-zinc-500 hover:text-[#E5B454] text-sm transition-colors">Nuestros Barberos</Link>
                             </li>
                             <li>
                                 <Link href="/contact" className="text-zinc-500 hover:text-[#E5B454] text-sm transition-colors">Contacto</Link>
@@ -68,11 +75,11 @@ const Footer: React.FC<FooterProps> = ({ minimal = false }) => {
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone size={18} className="text-[#E5B454] shrink-0" />
-                                <span className="text-zinc-500 text-sm">+507 123-4567</span>
+                                <span className="text-zinc-500 text-sm">+507 6214-6379</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail size={18} className="text-[#E5B454] shrink-0" />
-                                <span className="text-zinc-500 text-sm">info@miagobarber.com</span>
+                                <span className="text-zinc-500 text-sm">miagopty@gmail.com</span>
                             </li>
                         </ul>
                     </div>

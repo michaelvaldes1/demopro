@@ -78,6 +78,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await signInAnonymously(auth);
         } catch (error: any) {
             setLoading(false);
+            throw error; // Rethrow to let caller handle it
         }
     };
 

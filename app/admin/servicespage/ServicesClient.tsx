@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition, useEffect } from 'react';
-import { Plus, Scissors, RefreshCw, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, Scissors, RefreshCw, Trash2, Search, Filter, Image as ImageIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { addService, updateService, deleteService } from '../actions';
@@ -37,6 +37,7 @@ export default function ServicesClient({ children }: ServicesClientProps) {
     const [serviceToEdit, setServiceToEdit] = useState<Service | null>(null);
     const [activeServiceForDropdown, setActiveServiceForDropdown] = useState<Service | null>(null);
     const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     // Form state
     const [newName, setNewName] = useState("");
@@ -46,6 +47,57 @@ export default function ServicesClient({ children }: ServicesClientProps) {
     const [newCategory, setNewCategory] = useState("Corte de Cabello");
     const [newImageUrl, setNewImageUrl] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Helper function to compress image (copied from AddBarberModal logic)
+    const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDimension = 1920;
+                    if (width > height && width > maxDimension) {
+                        height = (height * maxDimension) / width;
+                        width = maxDimension;
+                    } else if (height > maxDimension) {
+                        width = (width * maxDimension) / height;
+                        height = maxDimension;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    let quality = 0.9;
+                    let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    while (compressedDataUrl.length > 1024 * 1024 && quality > 0.1) {
+                        quality -= 0.1;
+                        compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    }
+                    resolve(compressedDataUrl);
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            try {
+                const compressedImage = await compressImage(file);
+                setNewImageUrl(compressedImage);
+            } catch (error) {
+                console.error("Error compressing image:", error);
+                alert("Error al procesar la imagen. Por favor intenta de nuevo.");
+            }
+        }
+    };
 
     useEffect(() => {
         if (isAddOpen) {
@@ -157,7 +209,7 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10 px-6">
                     <div>
                         <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-md flex items-center gap-3">
-                            <Scissors className="text-[#E5B454]" size={32} />
+                            <Scissors className="text-[#D09E1E]" size={32} />
                             SERVICIOS
                         </h1>
                         <p className="text-white/40 text-sm mt-2 font-medium tracking-wide uppercase pl-1">
@@ -170,14 +222,14 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                             onClick={() => router.refresh()}
                             className="w-[50px] h-[50px] flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/20 hover:text-white text-white/50 rounded-2xl transition-all shadow-lg active:scale-95 backdrop-blur-md group"
                         >
-                            <RefreshCw size={20} className={`group-hover:rotate-180 transition-transform duration-700 ${isPending ? "animate-spin text-[#E5B454]" : ""}`} />
+                            <RefreshCw size={20} className={`group-hover:rotate-180 transition-transform duration-700 ${isPending ? "animate-spin text-[#D09E1E]" : ""}`} />
                         </button>
 
                         <button
                             onClick={() => setIsAddOpen(true)}
                             className="flex items-center gap-2 px-6 h-[50px] rounded-2xl font-bold text-black shadow-lg uppercase tracking-wider text-xs transition-all hover:scale-105 active:scale-95"
                             style={{
-                                background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)',
+                                background: 'linear-gradient(135deg, #D09E1E 0%, #D09E1E 100%)',
                                 boxShadow: '0 8px 20px rgba(208, 158, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
                             }}
                         >
@@ -199,7 +251,7 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                     {/* Toolbar */}
                     <div className="p-6 border-b border-white/5 flex flex-col md:flex-row items-stretch md:items-center gap-4">
                         <div className="relative w-full max-w-sm group">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/30 group-focus-within:text-[#E5B454] transition-colors">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/30 group-focus-within:text-[#D09E1E] transition-colors">
                                 <Scissors size={18} />
                             </div>
                             <input
@@ -207,7 +259,7 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                                 value={filterValue}
                                 onChange={(e) => handleSearch(e.target.value)}
                                 placeholder="BUSCAR SERVICIO..."
-                                className="w-full pl-12 pr-10 py-3 bg-black/20 border border-white/5 rounded-2xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:bg-black/40 focus:border-[#E5B454]/30 transition-all uppercase tracking-wider font-bold shadow-inner"
+                                className="w-full pl-12 pr-10 py-3 bg-black/20 border border-white/5 rounded-2xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:bg-black/40 focus:border-[#D09E1E]/30 transition-all uppercase tracking-wider font-bold shadow-inner"
                             />
                         </div>
 
@@ -217,7 +269,7 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                                     key={cat}
                                     onClick={() => handleCategoryChange(cat)}
                                     className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${selectedCategory === cat
-                                        ? 'bg-[#E5B454] text-black'
+                                        ? 'bg-[#D09E1E] text-black'
                                         : 'bg-white/5 text-white/50 hover:bg-white/10'
                                         }`}
                                 >
@@ -253,37 +305,57 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                                 <div className="p-8 border-b border-white/5"><h2 className="text-xl font-bold text-white">Nuevo Servicio</h2></div>
                                 <div className="p-8 space-y-4 overflow-y-auto max-h-[calc(85vh-200px)]">
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Nombre <span className="text-[#E5B454]">*</span></label>
-                                        <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ej. The Urban Fade" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner" />
+                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Nombre <span className="text-[#D09E1E]">*</span></label>
+                                        <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Ej. The Urban Fade" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#D09E1E]/50 transition-all shadow-inner" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Descripción</label>
-                                        <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Describe el servicio..." className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner min-h-[100px] resize-none" />
+                                        <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Describe el servicio..." className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#D09E1E]/50 transition-all shadow-inner min-h-[100px] resize-none" />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Precio ($) <span className="text-[#E5B454]">*</span></label>
-                                            <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="35" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner" />
+                                            <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Precio ($) <span className="text-[#D09E1E]">*</span></label>
+                                            <input type="number" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="35" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#D09E1E]/50 transition-all shadow-inner" />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Duración <span className="text-[#E5B454]">*</span></label>
-                                            <input value={newDuration} onChange={(e) => setNewDuration(e.target.value)} placeholder="45 min" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner" />
+                                            <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Duración <span className="text-[#D09E1E]">*</span></label>
+                                            <input value={newDuration} onChange={(e) => setNewDuration(e.target.value)} placeholder="45 min" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#D09E1E]/50 transition-all shadow-inner" />
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Categoría <span className="text-[#E5B454]">*</span></label>
-                                        <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner">
+                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Categoría <span className="text-[#D09E1E]">*</span></label>
+                                        <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#D09E1E]/50 transition-all shadow-inner">
                                             {CATEGORIES.map((cat) => (<option key={cat} value={cat} className="bg-zinc-900">{cat}</option>))}
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">URL de Imagen</label>
-                                        <input value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://ejemplo.com/imagen.jpg" className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none focus:bg-white/10 focus:border-[#E5B454]/50 transition-all shadow-inner" />
+                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Imagen del Servicio</label>
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className={`aspect-video w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center gap-2 ${newImageUrl ? 'border-[#D09E1E] bg-black/40' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                                                }`}
+                                        >
+                                            {newImageUrl ? (
+                                                <img src={newImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <>
+                                                    <div className="p-3 rounded-full bg-white/5 text-white/20"><ImageIcon size={24} /></div>
+                                                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Subir Imagen</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
                                     </div>
                                 </div>
                                 <div className="p-8 border-t border-white/5 flex gap-3">
                                     <button onClick={() => setIsAddOpen(false)} className="flex-1 h-12 rounded-2xl font-bold text-white/50 hover:text-white bg-white/5 hover:bg-white/10 transition-colors">Cancelar</button>
-                                    <button onClick={handleAddService} disabled={!newName || !newPrice || !newDuration || !newCategory || isSubmitting} className="flex-[1.5] h-12 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 text-black" style={{ background: 'linear-gradient(135deg, #E5B454 0%, #D09E1E 100%)' }}>{isSubmitting ? 'Guardando...' : 'Guardar'}</button>
+                                    <button onClick={handleAddService} disabled={!newName || !newPrice || !newDuration || !newCategory || isSubmitting} className="flex-[1.5] h-12 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-95 text-black" style={{ background: 'linear-gradient(135deg, #D09E1E 0%, #D09E1E 100%)' }}>{isSubmitting ? 'Guardando...' : 'Guardar'}</button>
                                 </div>
                             </motion.div>
                         </div>
@@ -316,7 +388,30 @@ export default function ServicesClient({ children }: ServicesClientProps) {
                                         <div className="space-y-1.5"><label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Duración <span className="text-[#E5B454]">*</span></label><input value={newDuration} onChange={(e) => setNewDuration(e.target.value)} className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm" /></div>
                                     </div>
                                     <div className="space-y-1.5"><label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Categoría <span className="text-[#E5B454]">*</span></label><select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm">{CATEGORIES.map((cat) => (<option key={cat} value={cat} className="bg-zinc-900">{cat}</option>))}</select></div>
-                                    <div className="space-y-1.5"><label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">URL de Imagen</label><input value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm focus:outline-none" /></div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[11px] font-bold text-white/50 uppercase tracking-wider ml-1">Imagen del Servicio</label>
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className={`aspect-video w-full rounded-2xl border-2 border-dashed transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center gap-2 ${newImageUrl ? 'border-[#E5B454] bg-black/40' : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                                                }`}
+                                        >
+                                            {newImageUrl ? (
+                                                <img src={newImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <>
+                                                    <div className="p-3 rounded-full bg-white/5 text-white/20"><ImageIcon size={24} /></div>
+                                                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Subir Imagen</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="p-8 border-t border-white/5 flex gap-3">
                                     <button onClick={() => setIsEditOpen(false)} className="flex-1 h-12 rounded-2xl font-bold text-white/50 hover:text-white bg-white/5 hover:bg-white/10 transition-colors">Cancelar</button>

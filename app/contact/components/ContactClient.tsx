@@ -155,9 +155,9 @@ export function ContactClient() {
                     className="flex flex-col gap-6 w-full"
                 >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                        <LiquidCard icon={<FaPhone />} title="Teléfono" content="+507 0000-0000" />
-                        <LiquidCard icon={<FaEnvelope />} title="Email" content="info@miagobarber.com" />
-                        <LiquidCard icon={<FaWhatsapp />} title="WhatsApp" content="Chatea con nosotros" />
+                        <LiquidCard icon={<FaPhone />} title="Teléfono" content="+507 6214-6379" />
+                        <LiquidCard icon={<FaEnvelope />} title="Email" content="miagopty@gmail.com" />
+                        <LiquidCard icon={<FaWhatsapp />} title="WhatsApp" content="+507 6214-6379" />
                     </div>
 
                     {/* Map Section */}
@@ -214,7 +214,7 @@ export function ContactClient() {
                                                     <span>{place.hours}</span>
                                                 </div>
                                                 <div className="flex gap-2 pt-2">
-                                                    <Button size="sm" className="flex-1 h-9 bg-[#D09E1E] hover:bg-[#E5B454] text-black font-bold rounded-xl border-none">
+                                                    <Button size="sm" className="flex-1 h-9 bg-[#D09E1E] hover:bg-[#D09E1E] text-black font-bold rounded-xl border-none">
                                                         <Navigation className="size-3.5 mr-1.5" />
                                                         Llegar
                                                     </Button>

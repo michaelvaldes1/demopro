@@ -40,3 +40,8 @@ lib/serviceAccountKey.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# firebase logs
+firebase-debug.log*
+firestore-debug.log*
+pubsub-debug.log*

@@ -20,7 +20,7 @@ export default function TopBarbersClient({ barbers }: TopBarbersClientProps) {
     if (barbers.length === 0) return null;
 
     return (
-        <div className="mt-16 mb-20">
+        <div className="mt-16 mb-20" id="barbers">
             <h2 className="text-3xl font-black text-white mb-8">Nuestros Barberos</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

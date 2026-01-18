@@ -111,7 +111,9 @@ export default function TopBar() {
                     {/* Logo (Middle - Absolute Centered) */}
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2.5">
                         <Image src="/miago-single.svg" alt="Logo" width={32} height={32} className="drop-shadow-[0_0_8px_rgba(208,158,30,0.3)]" />
-                        <span className="font-bold text-md tracking-tight text-white">MIAGOBARBER</span>
+                        <span className="font-black text-xl tracking-tighter text-white">
+                            MIAGO<span className="text-[#D09E1E]">BARBER</span>
+                        </span>
                     </div>
 
                     {/* Notification (Right) */}

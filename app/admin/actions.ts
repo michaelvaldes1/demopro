@@ -481,6 +481,26 @@ export async function updateAppointmentStatus(id: string, status: string) {
         updatedAt: new Date().toISOString(),
     });
 
+    // Notify n8n of the status change
+    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+    if (n8nWebhookUrl) {
+        try {
+            await fetch(n8nWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id,
+                    ...appointmentData,
+                    status, // Updated status
+                    updatedAt: new Date().toISOString(),
+                    action: 'status_change_admin'
+                })
+            });
+        } catch (error) {
+            console.error('Error sending status change to n8n:', error);
+        }
+    }
+
     // If marked as completed, update user stats
     if (status === 'completed') {
         await updateUserStats(
@@ -733,22 +753,45 @@ export async function addService(serviceData: any) {
         throw new Error('Todos los campos obligatorios (nombre, precio, duración, categoría) deben estar presentes.');
     }
 
+    // Create service document first to get ID
     const docRef = await adminDb.collection('services').add({
-        ...serviceData,
-        imageUrl: serviceData.imageUrl || '',
+        name: serviceData.name,
+        description: serviceData.description || '',
+        price: serviceData.price,
+        duration: serviceData.duration,
+        category: serviceData.category,
         createdAt: new Date().toISOString()
     });
 
-    await createAuditLog({
-        adminEmail: admin.email || 'unknown',
-        action: 'create',
-        resourceType: 'service',
-        resourceId: docRef.id,
-        resourceName: serviceData.name,
-        metadata: { price: serviceData.price, category: serviceData.category }
-    });
+    try {
+        let finalImageUrl = serviceData.imageUrl || '';
+        // If it's a base64 image, upload to Storage
+        if (finalImageUrl.startsWith('data:image')) {
+            finalImageUrl = await uploadImageToStorage(
+                finalImageUrl,
+                `services/${docRef.id}/image.jpg`
+            );
+        }
 
-    return { id: docRef.id, success: true };
+        // Update document with final URL
+        await docRef.update({ imageUrl: finalImageUrl });
+
+        await createAuditLog({
+            adminEmail: admin.email || 'unknown',
+            action: 'create',
+            resourceType: 'service',
+            resourceId: docRef.id,
+            resourceName: serviceData.name,
+            metadata: { price: serviceData.price, category: serviceData.category }
+        });
+
+        return { id: docRef.id, success: true };
+    } catch (error) {
+        // If something fails during image upload, we still have the doc but maybe without image
+        // Or we could delete it if we want to be strict (like addBarber does)
+        console.error('Error uploading service image:', error);
+        return { id: docRef.id, success: true };
+    }
 }
 
 export async function updateService(id: string, serviceData: any) {
@@ -758,9 +801,18 @@ export async function updateService(id: string, serviceData: any) {
         throw new Error('Todos los campos obligatorios (nombre, precio, duración, categoría) deben estar presentes.');
     }
 
+    let finalImageUrl = serviceData.imageUrl || '';
+    // If it's a new base64 image, upload to Storage
+    if (finalImageUrl.startsWith('data:image')) {
+        finalImageUrl = await uploadImageToStorage(
+            finalImageUrl,
+            `services/${id}/image.jpg`
+        );
+    }
+
     await adminDb.collection('services').doc(id).update({
         ...serviceData,
-        imageUrl: serviceData.imageUrl || '',
+        imageUrl: finalImageUrl,
         updatedAt: new Date().toISOString()
     });
 

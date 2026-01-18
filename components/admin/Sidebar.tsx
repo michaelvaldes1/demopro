@@ -24,7 +24,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const handleLogout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/auth';
+            window.location.href = '/';
         } catch (error) {
             console.error('Error logging out:', error);
         }

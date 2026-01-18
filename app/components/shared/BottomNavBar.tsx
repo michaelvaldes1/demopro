@@ -56,7 +56,7 @@ export default function BottomNavBar() {
                 <div
                     className="absolute inset-0 transition-opacity duration-500 pointer-events-none"
                     style={{
-                        background: `radial-gradient(150px circle at ${mousePos.x}px ${mousePos.y}px, rgba(229, 180, 84, 0.15), transparent 80%)`,
+                        background: `radial-gradient(150px circle at ${mousePos.x}px ${mousePos.y}px, rgba(208, 158, 30, 0.15), transparent 80%)`,
                         opacity: isHovered ? 1 : 0,
                     }}
                 />
@@ -80,8 +80,8 @@ export default function BottomNavBar() {
                                 {/* Icon Container */}
                                 <div
                                     className={`relative z-10 transition-all duration-500 ease-out mb-1 ${isActive
-                                            ? "text-[#E5B454] scale-110 drop-shadow-[0_0_15px_rgba(229,180,84,0.6)] -translate-y-1"
-                                            : "text-white/40 group-hover/item:text-white/80 group-hover/item:scale-105"
+                                        ? "text-[#D09E1E] scale-110 drop-shadow-[0_0_15px_rgba(208,158,30,0.6)] -translate-y-1"
+                                        : "text-white/40 group-hover/item:text-white/80 group-hover/item:scale-105"
                                         }`}
                                 >
                                     {item.icon}
@@ -90,15 +90,15 @@ export default function BottomNavBar() {
                                 {/* Label */}
                                 <span
                                     className={`text-[10px] font-bold uppercase tracking-wider transition-all duration-500 ${isActive
-                                            ? "text-white opacity-100 translate-y-0"
-                                            : "text-white/40 opacity-0 group-hover/item:opacity-70 translate-y-2 group-hover/item:translate-y-0 absolute bottom-1 scale-75 group-hover/item:scale-100 group-hover/item:relative"
+                                        ? "text-white opacity-100 translate-y-0"
+                                        : "text-white/40 opacity-0 group-hover/item:opacity-70 translate-y-2 group-hover/item:translate-y-0 absolute bottom-1 scale-75 group-hover/item:scale-100 group-hover/item:relative"
                                         }`}
                                 >
                                     {item.label}
                                 </span>
 
                                 {/* Active Dot Indicator */}
-                                <div className={`absolute bottom-1 w-1 h-1 rounded-full bg-[#E5B454] transition-all duration-500 ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
+                                <div className={`absolute bottom-1 w-1 h-1 rounded-full bg-[#D09E1E] transition-all duration-500 ${isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
                                     }`} />
                             </Link>
                         );
